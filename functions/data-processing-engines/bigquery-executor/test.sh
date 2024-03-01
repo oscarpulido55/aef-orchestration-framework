@@ -54,7 +54,7 @@ curl -X GET \
      https://dataform.googleapis.com/v1beta1/projects/$project/locations/$location/repositories/$repository_id:readFile?path=querytest.sql
 
 
-curl -m 70 -X POST https://us-central1-pso-amex-data-platform.cloudfunctions.net/function-2 \
+curl -m 70 -X POST https://us-central1-pso-amex-data-platform.cloudfunctions.net/cf_bigquery_executor \
 -H "Authorization: bearer $(gcloud auth print-identity-token)" \
 -H "Content-Type: application/json" \
 -d '{

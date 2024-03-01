@@ -14,7 +14,7 @@ from google.auth.transport.requests import Request
 credentials, project = google.auth.default()
 
 @functions_framework.http
-def read_and_execute_query(request):
+def main(request):
     request_json = request.get_json(silent=True)
 
     location = request_json['location']

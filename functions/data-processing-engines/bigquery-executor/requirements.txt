@@ -5,4 +5,3 @@ grpcio
 grpcio-tools
 google-api-python-client
 google-cloud-dataform
-base64
