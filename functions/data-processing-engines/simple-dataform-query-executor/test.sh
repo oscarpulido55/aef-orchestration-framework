@@ -10,7 +10,7 @@ project=pso-amex-data-platform
 location=us-central1
 repository_id=test-repo5
 
-# SQL query and owner information
+# Dataform repository, test query, and JOB information
 dataform_location=us-central1
 dataform_project_id=pso-amex-data-platform
 commitname=bqfile
