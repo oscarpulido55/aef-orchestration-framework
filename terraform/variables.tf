@@ -15,20 +15,31 @@
  */
 
 variable "project" {
+  description = "Project where the AEF Orchestration Framework will be deployed."
   type        = string
   nullable    = false
-  default = "pso-amex-data-platform"
 }
 
 variable "region" {
-  type        = string
-  nullable    = false
-  default = "us-central1"
-}
-
-variable "bucket_name" {
   description = "Name of the bucket that will be used for the functions code. It will be created with prefix prepended if bucket_config is not null."
   type        = string
   nullable    = false
-  default = "aef_functions_bucket"
+}
+
+variable "dataform_project" {
+  description = "Project where the dataform repositories reside."
+  type        = string
+  nullable    = false
+}
+
+variable "dataform_location" {
+  description = "Location of the dataform project repository"
+  type        = string
+  nullable    = false
+}
+
+variable "dataform_repository" {
+  description = "Name of the dataform repository"
+  type        = string
+  nullable    = false
 }

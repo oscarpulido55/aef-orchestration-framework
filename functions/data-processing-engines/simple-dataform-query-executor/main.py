@@ -5,7 +5,7 @@ import requests
 import base64
 import uuid
 import re
-from google.cloud import bigquery, dataform_v1beta1
+from google.cloud import bigquery, dataform_v1beta1, resourcemanager_v3
 from google.api_core.exceptions import BadRequest
 from google.auth.transport.requests import Request
 
@@ -27,17 +27,16 @@ def main(request):
     """
 
     request_json = request.get_json(silent=True)
-
-    location = request_json['location']
+    dataform_location = request_json['dataform_location']
     dataform_project_id = request_json['dataform_project_id']
     repository_name = request_json['repository_name']
     file_path = request_json['file_path']
-    bq_project_id = request_json['bq_project_id']
+
     job_id = request_json.get('job_id', None)
     query_variables = request_json.get('query_variables', None)
 
-    query_file = read_file(dataform_project_id, location, repository_name, file_path, query_variables)
-    status_or_job_id = execute_query_or_get_status(bq_project_id, query_file, file_path, job_id)
+    query_file = read_file(dataform_project_id, dataform_location, repository_name, file_path, query_variables)
+    status_or_job_id = execute_query_or_get_status(query_file, file_path, job_id)
 
     if status_or_job_id.startswith('aef_'):
         print(f"Running Query, track it with Job ID: {status_or_job_id}")
@@ -107,7 +106,7 @@ def read_file_grpc(project_id, location, repository_name, file_path, commit_sha=
         return None
 
 
-def execute_query_or_get_status(project_id, query_file, file_path, job_id=None):
+def execute_query_or_get_status(query_file, file_path, job_id=None):
     """Executes a BigQuery query (if job ID not provided) or gets the status of an existing query.
     Args:
         query_file (str): The Dataform query to execute.
@@ -115,7 +114,7 @@ def execute_query_or_get_status(project_id, query_file, file_path, job_id=None):
     Returns:
         str: The final state of the query job ('DONE', 'FAILED', etc.) or the query job ID if the query times out.
     """
-    client = bigquery.Client(project_id, credentials)
+    client = bigquery.Client()
     if job_id:
         query_job = client.get_job(job_id)
         print(f"Checking status of existing job: {job_id}")
