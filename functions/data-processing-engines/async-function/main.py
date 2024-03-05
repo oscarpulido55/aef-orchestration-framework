@@ -90,7 +90,9 @@ def call_custom_function(request_json, async_job_id):
         "location": "europe-west2",
         "project_id": "dp-111-trf",
         "repository_name": "TestRepoDataform",
-        "file_path": "definitions/"+workflow_name+"/"+job_name+".sqlx"
+        "file_path": "definitions/"+workflow_name+"/"+job_name+".sqlx",
+        "start_date": request_json['start_date'],
+        "end_date": request_json['end_date']
     }
     if async_job_id:
         params['job_id'] = async_job_id
