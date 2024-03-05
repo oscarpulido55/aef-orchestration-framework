@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-module "cf_bigquery_executor" {
+module "simple-dataform-query-executor" {
   source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
   project_id  = var.project
   region      = var.region
-  name        = "cf_bigquery_executor"
+  name        = "simple-dataform-query-executor"
   bucket_name = var.bucket_name
     bucket_config = {
-    lifecycle_delete_age_days = 1
+    force_destroy = true
   }
   bundle_config = {
-    source_dir  = "../functions/data-processing-engines/bigquery-executor"
+    source_dir  = "../functions/data-processing-engines/simple-dataform-query-executor"
     output_path = "bundle.zip"
   }
   function_config = {
