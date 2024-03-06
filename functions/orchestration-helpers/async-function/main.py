@@ -37,7 +37,6 @@ DATAFORM_REPO_NAME = os.environ.get('DATAFORM_REPO_NAME')
 # define clients
 bq_client = bigquery.Client(project=WORKFLOW_CONTROL_PROJECT_ID)
 
-
 def main(request):
     request_json = request.get_json()
     print("event: " + str(request_json))
@@ -98,8 +97,8 @@ def call_custom_function(request_json, async_job_id):
         "repository_name": DATAFORM_REPO_NAME,
         "file_path": "definitions/" + workflow_name + "/" + job_name + ".sqlx",
         "query_variables": {
-            "${dataform.projectConfig.vars.start_date}": request_json['start_date'],
-            "${dataform.projectConfig.vars.end_date}": request_json['end_date']
+            "${dataform.projectConfig.vars.start_date}": request_json['query_variables']['start_date'],
+            "${dataform.projectConfig.vars.end_date}": request_json['query_variables']['end_date']
         }
     }
 

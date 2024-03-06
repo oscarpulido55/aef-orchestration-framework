@@ -25,7 +25,7 @@ module "async-function" {
   }
   bundle_config = {
     source_dir  = "../functions/orchestration-helpers/async-function"
-    output_path = "bundle.zip"
+    output_path = "bundle-orch-framework-async-function.zip"
   }
   function_config = {
     runtime = "python39"
@@ -49,7 +49,7 @@ module "simple-dataform-query-executor" {
   }
   bundle_config = {
     source_dir  = "../functions/data-processing-engines/simple-dataform-query-executor"
-    output_path = "bundle.zip"
+    output_path = "bundle-orch-framework-simple-dataform-query-executor.zip"
   }
   function_config = {
     runtime = "python39"

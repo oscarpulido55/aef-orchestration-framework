@@ -17,8 +17,10 @@ async_job_id=$(curl -m 70 -X POST https://$location-$project.cloudfunctions.net/
     "job_name": "'$job_name'",
     "workflow_name": "'$workflow_name'",
     "execution_id" : "'$execution_id'",
-    "start_date" : "'$start_date'",
-    "end_date" : "'$end_date'"
+    "query_variables":{
+        "start_date" : "'$start_date'",
+        "end_date" : "'$end_date'"
+    }
 }')
 
 echo "Job ID: "
@@ -33,6 +35,8 @@ curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-
     "workflow_name": "'$workflow_name'",
     "execution_id" : "'$execution_id'",
     "async_job_id" : "'$async_job_id'",
-    "start_date" : "'$start_date'",
-    "end_date" : "'$end_date'"
+    "query_variables":{
+        "start_date" : "'$start_date'",
+        "end_date" : "'$end_date'"
+    }
 }'
