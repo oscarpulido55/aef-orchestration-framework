@@ -11,14 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functions_framework
-import random
 import os
 from google.cloud import bigquery
 from datetime import datetime
 import google.auth
-from google.auth.transport.requests import AuthorizedSession
-import requests  # Or use another HTTP library
 import urllib
 import json
 import google.auth.transport.requests
@@ -36,6 +32,7 @@ DATAFORM_REPO_NAME = os.environ.get('DATAFORM_REPO_NAME')
 
 # define clients
 bq_client = bigquery.Client(project=WORKFLOW_CONTROL_PROJECT_ID)
+
 
 def main(request):
     request_json = request.get_json()
@@ -82,7 +79,7 @@ def log_step_bigquery(request_json, status):
 
     workflows_control_table = bq_client.dataset(WORKFLOW_CONTROL_DATASET_ID).table(WORKFLOW_CONTROL_TABLE_ID)
     errors = bq_client.insert_rows_json(workflows_control_table, [data])  # Use list for multiple inserts
-    if errors == []:
+    if not errors:
         print("New row has been added.")
     else:
         print("Encountered errors while inserting row: {}".format(errors))

@@ -35,6 +35,9 @@ module "async-function" {
     DATAFORM_LOCATION = var.dataform_location
     DATAFORM_PROJECT = var.dataform_project
     DATAFORM_REPO_NAME = var.dataform_repository
+    WORKFLOW_CONTROL_PROJECT_ID = var.project
+    WORKFLOW_CONTROL_DATASET_ID = module.bigquery-dataset.dataset_id
+    WORKFLOW_CONTROL_TABLE_ID = "workflows_control"
   }
 }
 
@@ -55,3 +58,17 @@ module "simple-dataform-query-executor" {
     runtime = "python39"
   }
 }
+
+module "bigquery-dataset" {
+  source     = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/bigquery-dataset"
+  project_id = var.project
+  id         = "aef_orch_framework"
+  tables = {
+    workflows_control = {
+      friendly_name       = "workflows_control"
+      schema              = local.workflows_control
+      deletion_protection = false
+    }
+  }
+}
+
