@@ -140,7 +140,10 @@ def execute_query_or_get_status(query_file, file_path, job_id=None):
             return query_job.state
     else:
         job_id = f"aef_{transform_string(file_path)}_{uuid.uuid4()}"
-        query_job = client.query(query_file, job_id=job_id)
+        job_config = bigquery.QueryJobConfig(
+            priority=bigquery.QueryPriority.BATCH
+        )
+        query_job = client.query(query=query_file,job_config=job_config,job_id=job_id)
         print(f"New query started. Job ID: {query_job.job_id}")
         return query_job.job_id
 

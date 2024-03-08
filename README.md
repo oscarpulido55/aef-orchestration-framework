@@ -19,6 +19,6 @@ Automate the deployment of your orchestration logic including retry strategy, ge
 This Orchestration Framework is designed as a component of a comprehensive Analytics Engineering Framework comprised of:
 
 1. Analytics Engineering Framework - Data Orchestration: Automates the generation of Google Cloud Workflows Definition files.
-2. Analytics Engineering Framework - Orchestration Framework: Seamlessly deploy your orchestration infrastructure.
-2. Analytics Engineering Framework - Data Transformation: Houses your data transformation logic.
-3. Analytics Engineering Framework - Data Model: Manages data models, schemas and Dataplex lakes and zones.
+1. Analytics Engineering Framework - Orchestration Framework: Seamlessly deploy your orchestration infrastructure.
+1. Analytics Engineering Framework - Data Transformation: Houses your data transformation logic.
+1. Analytics Engineering Framework - Data Model: Manages data models, schemas and Dataplex lakes and zones.
