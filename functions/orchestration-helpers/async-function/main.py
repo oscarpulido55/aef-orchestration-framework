@@ -25,7 +25,6 @@ WORKFLOW_CONTROL_PROJECT_ID = os.environ.get('WORKFLOW_CONTROL_PROJECT_ID')
 WORKFLOW_CONTROL_DATASET_ID = os.environ.get('WORKFLOW_CONTROL_DATASET_ID')
 WORKFLOW_CONTROL_TABLE_ID = os.environ.get('WORKFLOW_CONTROL_TABLE_ID')
 
-SIMPLE_DATAFORM_QUERY_EXECUTOR_URL = os.environ.get('SIMPLE_DATAFORM_QUERY_EXECUTOR_URL')
 DATAFORM_LOCATION = os.environ.get('DATAFORM_LOCATION')
 DATAFORM_PROJECT = os.environ.get('DATAFORM_PROJECT')
 DATAFORM_REPO_NAME = os.environ.get('DATAFORM_REPO_NAME')
@@ -58,7 +57,7 @@ def main(request):
 def log_job_id(async_job_id):
     print(f"Executing Async Job ID: {async_job_id}")
 
-
+#TODO Fix log message
 def log_step_bigquery(request_json, status):
     current_datetime = datetime.now().isoformat()
     data = {
@@ -101,10 +100,12 @@ def call_custom_function(request_json, async_job_id):
     if async_job_id:
         params['job_id'] = async_job_id
 
-    req = urllib.request.Request(SIMPLE_DATAFORM_QUERY_EXECUTOR_URL, data=json.dumps(params).encode("utf-8"))
+    target_function_url = request_json['function_url_to_call']
+
+    req = urllib.request.Request(target_function_url, data=json.dumps(params).encode("utf-8"))
 
     auth_req = google.auth.transport.requests.Request()
-    id_token = google.oauth2.id_token.fetch_id_token(auth_req, SIMPLE_DATAFORM_QUERY_EXECUTOR_URL)
+    id_token = google.oauth2.id_token.fetch_id_token(auth_req, target_function_url)
 
     req.add_header("Authorization", f"Bearer {id_token}")
     req.add_header("Content-Type", "application/json")

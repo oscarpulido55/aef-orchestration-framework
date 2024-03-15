@@ -18,6 +18,7 @@ import requests
 import base64
 import uuid
 import re
+import os
 from google.cloud import bigquery, dataform_v1beta1, resourcemanager_v3
 from google.api_core.exceptions import BadRequest
 from google.auth.transport.requests import Request
@@ -25,6 +26,7 @@ from google.auth.transport.requests import Request
 # --- Authentication Setup ---
 credentials, project = google.auth.default()
 
+BIG_QUERY_PROJECT_ID = os.environ.get('BIG_QUERY_PROJECT_ID')
 
 @functions_framework.http
 def main(request):
@@ -40,6 +42,7 @@ def main(request):
     """
 
     request_json = request.get_json(silent=True)
+    print("event:" + str(request_json))
     dataform_location = request_json['dataform_location']
     dataform_project_id = request_json['dataform_project_id']
     repository_name = request_json['repository_name']
@@ -85,6 +88,8 @@ def read_file(project_id, location, repository_name, file_path, query_variables)
         file_contents = base64.b64decode(response.json()["contents"]).decode('utf-8').lstrip("-n")
         if query_variables:
             file_contents = replace_variables(file_contents, query_variables)
+        if file_contents.startswith("config"):
+            file_contents = file_contents.split("\n",3)[3]
         return file_contents
     else:
         print("API request failed. Status code:", response.status_code)
@@ -127,7 +132,7 @@ def execute_query_or_get_status(query_file, file_path, job_id=None):
     Returns:
         str: The final state of the query job ('DONE', 'FAILED', etc.) or the query job ID if the query times out.
     """
-    client = bigquery.Client()
+    client = bigquery.Client(project=BIG_QUERY_PROJECT_ID)
     if job_id:
         query_job = client.get_job(job_id)
         print(f"Checking status of existing job: {job_id}")
