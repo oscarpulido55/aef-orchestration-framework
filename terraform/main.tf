@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-module "async-function" {
+module "intermediate-function" {
   source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
   project_id  = var.project
   region      = var.region
-  name        = "orch-framework-async-function"
-  bucket_name = "${var.project}-async-function-bucket"
+  name        = "orch-framework-intermediate-function"
+  bucket_name = "${var.project}-intermediate-function-bucket"
   bucket_config = {
     force_destroy = true
   }
   bundle_config = {
-    source_dir  = "../functions/orchestration-helpers/async-function"
-    output_path = "bundle-orch-framework-async-function.zip"
+    source_dir  = "../functions/orchestration-helpers/intermediate-function"
+    output_path = "bundle-orch-framework-intermediate-function.zip"
   }
   function_config = {
     runtime = "python39"
   }
   environment_variables = {
-    SIMPLE_DATAFORM_QUERY_EXECUTOR_URL = module.simple-dataform-query-executor.uri
     DATAFORM_LOCATION = var.dataform_location
     DATAFORM_PROJECT = var.dataform_project
     DATAFORM_REPO_NAME = var.dataform_repository
@@ -57,6 +56,10 @@ module "simple-dataform-query-executor" {
   function_config = {
     runtime = "python39"
   }
+  environment_variables = {
+      BIGQUERY_PROJECT = var.dataform_project
+  }
+
 }
 
 module "bigquery-dataset" {

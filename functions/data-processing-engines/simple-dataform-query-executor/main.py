@@ -26,7 +26,7 @@ from google.auth.transport.requests import Request
 # --- Authentication Setup ---
 credentials, project = google.auth.default()
 
-BIG_QUERY_PROJECT_ID = os.environ.get('BIG_QUERY_PROJECT_ID')
+BIGQUERY_PROJECT = os.environ.get('BIGQUERY_PROJECT')
 
 @functions_framework.http
 def main(request):
@@ -132,7 +132,7 @@ def execute_query_or_get_status(query_file, file_path, job_id=None):
     Returns:
         str: The final state of the query job ('DONE', 'FAILED', etc.) or the query job ID if the query times out.
     """
-    client = bigquery.Client(project=BIG_QUERY_PROJECT_ID)
+    client = bigquery.Client(project=BIGQUERY_PROJECT)
     if job_id:
         query_job = client.get_job(job_id)
         print(f"Checking status of existing job: {job_id}")

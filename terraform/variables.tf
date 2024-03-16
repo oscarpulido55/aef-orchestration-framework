@@ -21,7 +21,7 @@ variable "project" {
 }
 
 variable "region" {
-  description = "Name of the bucket that will be used for the functions code. It will be created with prefix prepended if bucket_config is not null."
+  description = "Name of the region for the components to be deployed"
   type        = string
   nullable    = false
 }

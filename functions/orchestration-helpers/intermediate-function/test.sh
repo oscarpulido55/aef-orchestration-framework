@@ -9,7 +9,7 @@ execution_id=executionId1
 start_date="2019-01-01"
 end_date="2019-01-01"
 
-async_job_id=$(curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-async-function \
+async_job_id=$(curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-intermediate-function \
 -H "Authorization: bearer $(gcloud auth print-identity-token)" \
 -H "Content-Type: application/json" \
 -d '{
@@ -26,7 +26,7 @@ async_job_id=$(curl -m 70 -X POST https://$location-$project.cloudfunctions.net/
 echo "Job ID: "
 echo $async_job_id
 
-curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-async-function \
+curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-intermediate-function \
 -H "Authorization: bearer $(gcloud auth print-identity-token)" \
 -H "Content-Type: application/json" \
 -d '{
