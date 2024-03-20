@@ -43,3 +43,9 @@ variable "dataform_repository" {
   type        = string
   nullable    = false
 }
+
+variable "operator_email" {
+  description = "email of the data platform operator for error notifications"
+  type        = string
+  nullable    = false
+}
