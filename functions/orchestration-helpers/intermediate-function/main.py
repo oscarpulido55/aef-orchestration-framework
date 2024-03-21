@@ -16,9 +16,14 @@ from google.cloud import bigquery
 from datetime import datetime
 import google.auth
 import urllib
+import urllib.error
+import urllib.request
 import json
+import logging
 import google.auth.transport.requests
+import functions_framework
 import google.oauth2.id_token
+from google.cloud import error_reporting
 
 # Access environment variables
 WORKFLOW_CONTROL_PROJECT_ID = os.environ.get('WORKFLOW_CONTROL_PROJECT_ID')
@@ -31,31 +36,47 @@ DATAFORM_REPO_NAME = os.environ.get('DATAFORM_REPO_NAME')
 
 # define clients
 bq_client = bigquery.Client(project=WORKFLOW_CONTROL_PROJECT_ID)
+error_client = error_reporting.Client()
 
+@functions_framework.http
 def main(request):
     request_json = request.get_json()
     print("event: " + str(request_json))
-    if request_json and 'call_type' in request_json:
-        call_type = request_json['call_type']
-    else:
-        return f'no call type!'
-
-    if call_type == "get_id":
-        return call_custom_function(request_json, None)
-    elif call_type == "get_status":
-        if request_json and 'async_job_id' in request_json:
-            log_job_id(request_json['async_job_id'])
-            status = call_custom_function(request_json, request_json['async_job_id'])
+    try:
+        if request_json and 'call_type' in request_json:
+            call_type = request_json['call_type']
         else:
-            return f'Job Id not received!'
-        log_step_bigquery(request_json, status)
-        return status
-    else:
-        return f'Invalid call type!'
+            return f'no call type!'
+
+        if call_type == "get_id":
+            return call_custom_function(request_json, None)
+        elif call_type == "get_status":
+            if request_json and 'async_job_id' in request_json:
+                status = call_custom_function(request_json, request_json['async_job_id'])
+            else:
+                return f'Job Id not received!'
+            log_step_bigquery(request_json, status)
+            return status
+        else:
+            raise Exception("Invalid call type!")
+    except Exception as ex:
+        exception_message = "Exception : " + str(ex)[0:300]
+        #TODO notify error in BQ table
+        #TODO register error in checkpoint table
+        error_client.report_exception()
+        response = {
+            "error": ex.__class__.__name__,
+            "message": repr(ex)
+        }
+        #logging.error(exception_message)
+        print(RuntimeError(repr(ex)))
+        raise Exception(exception_message)
+        #if exception has custom error message
+        if len(ex.args) > 0:
+            response["message"] = ex.args[0]
+        return response, 500
 
 
-def log_job_id(async_job_id):
-    print(f"Executing Async Job ID: {async_job_id}")
 
 #TODO Fix log message
 def log_step_bigquery(request_json, status):
@@ -80,7 +101,7 @@ def log_step_bigquery(request_json, status):
     if not errors:
         print("New row has been added.")
     else:
-        print("Encountered errors while inserting row: {}".format(errors))
+        raise Exception("Encountered errors while inserting row: {}".format(errors))
 
 
 def call_custom_function(request_json, async_job_id):
@@ -101,25 +122,31 @@ def call_custom_function(request_json, async_job_id):
         params['job_id'] = async_job_id
 
     target_function_url = request_json['function_url_to_call']
+    try:
+        req = urllib.request.Request(target_function_url, data=json.dumps(params).encode("utf-8"))
 
-    req = urllib.request.Request(target_function_url, data=json.dumps(params).encode("utf-8"))
+        auth_req = google.auth.transport.requests.Request()
+        id_token = google.oauth2.id_token.fetch_id_token(auth_req, target_function_url)
 
-    auth_req = google.auth.transport.requests.Request()
-    id_token = google.oauth2.id_token.fetch_id_token(auth_req, target_function_url)
+        req.add_header("Authorization", f"Bearer {id_token}")
+        req.add_header("Content-Type", "application/json")
+        response = urllib.request.urlopen(req)
+        response = response.read()
 
-    req.add_header("Authorization", f"Bearer {id_token}")
-    req.add_header("Content-Type", "application/json")
-    response = urllib.request.urlopen(req)
-    response = response.read()
+        print('response: ' + str(response))
+        # Handle the response
+        if async_job_id == None and response.decode("utf-8").startswith("aef_"):
+            return response.decode("utf-8")
+        if response.decode("utf-8") in ('DONE', 'SUCCESS'):
+            return "success"
+        if response.decode("utf-8") in ('PENDING', 'RUNNING'):
+            return "running"
+        else:  # FAILURE
+            raise CallCustomFunctionError(f"Error calling target function: {response.decode('utf-8')}")
+    except (urllib.error.HTTPError)  as e:
+        print('Exception: ' + repr(e))
+        raise Exception("Error returned in custom function: " + target_function_url + ":" + repr(e))
 
-    print('response: ' + str(response))
-    # Handle the response
 
-    if async_job_id == None and response.decode("utf-8").startswith("aef_"):
-        return response.decode("utf-8")
-    if response.decode("utf-8") in ('DONE', 'SUCCESS'):
-        return "success"
-    if response.decode("utf-8") in ('PENDING', 'RUNNING'):
-        return "running"
-    else:  # FAILURE
-        return f"Error calling target function: {response.decode('utf-8')}"
+class CallCustomFunctionError(Exception):
+    """Exception for custom function call errors"""

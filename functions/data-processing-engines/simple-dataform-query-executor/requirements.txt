@@ -1,6 +1,7 @@
 functions-framework==3.*
 google-auth
 google-cloud-bigquery
+google-cloud-logging
 grpcio
 grpcio-tools
 google-api-python-client
