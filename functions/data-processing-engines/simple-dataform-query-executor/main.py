@@ -63,15 +63,12 @@ def main(request):
 
         return status_or_job_id
     except Exception as error:
+        err_message = "Exception: " + repr(error)
         response = {
             "error": error.__class__.__name__,
             "message": repr(error)
         }
-        # if exception has custom error message
-        if len(error.args) > 0:
-            response["message"] = error.args[0]
-        print("ERROR: " , str(response))
-        return response, 500
+        return response
 
 
 def read_file(project_id, location, repository_name, file_path, query_variables):

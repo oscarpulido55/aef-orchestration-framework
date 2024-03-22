@@ -20,6 +20,7 @@ import urllib.error
 import urllib.request
 import json
 import logging
+import google.cloud.logging
 import google.auth.transport.requests
 import functions_framework
 import google.oauth2.id_token
@@ -37,6 +38,10 @@ DATAFORM_REPO_NAME = os.environ.get('DATAFORM_REPO_NAME')
 # define clients
 bq_client = bigquery.Client(project=WORKFLOW_CONTROL_PROJECT_ID)
 error_client = error_reporting.Client()
+client = google.cloud.logging.Client()
+client.setup_logging()
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
 @functions_framework.http
 def main(request):
@@ -49,10 +54,10 @@ def main(request):
             return f'no call type!'
 
         if call_type == "get_id":
-            return call_custom_function(request_json, None)
+            return evaluate_error(call_custom_function(request_json, None))
         elif call_type == "get_status":
             if request_json and 'async_job_id' in request_json:
-                status = call_custom_function(request_json, request_json['async_job_id'])
+                status = evaluate_error(call_custom_function(request_json, request_json['async_job_id']))
             else:
                 return f'Job Id not received!'
             log_step_bigquery(request_json, status)
@@ -60,22 +65,18 @@ def main(request):
         else:
             raise Exception("Invalid call type!")
     except Exception as ex:
-        exception_message = "Exception : " + str(ex)[0:300]
-        #TODO notify error in BQ table
+        exception_message = "Exception : " + repr(ex)
         #TODO register error in checkpoint table
         error_client.report_exception()
-        response = {
-            "error": ex.__class__.__name__,
-            "message": repr(ex)
-        }
-        #logging.error(exception_message)
+        logger.error(exception_message)
         print(RuntimeError(repr(ex)))
-        raise Exception(exception_message)
-        #if exception has custom error message
-        if len(ex.args) > 0:
-            response["message"] = ex.args[0]
-        return response, 500
+        return exception_message, 500
 
+
+def evaluate_error(message):
+    if 'error' in message.lower() or 'exception' in message.lower():
+        raise Exception(message)
+    return message
 
 
 #TODO Fix log message
@@ -142,11 +143,7 @@ def call_custom_function(request_json, async_job_id):
         if response.decode("utf-8") in ('PENDING', 'RUNNING'):
             return "running"
         else:  # FAILURE
-            raise CallCustomFunctionError(f"Error calling target function: {response.decode('utf-8')}")
+            return  "Exception calling target function " + target_function_url.split('/')[-1] + ":" + response.decode('utf-8')
     except (urllib.error.HTTPError)  as e:
         print('Exception: ' + repr(e))
-        raise Exception("Error returned in custom function: " + target_function_url + ":" + repr(e))
-
-
-class CallCustomFunctionError(Exception):
-    """Exception for custom function call errors"""
+        raise Exception("unexpected HTTP error in custom function: " + target_function_url.split('/')[-1] + ":" + repr(e))
