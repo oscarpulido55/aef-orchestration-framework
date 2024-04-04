@@ -40,6 +40,36 @@ module "intermediate-function" {
   }
 }
 
+module "scheduling-function" {
+  source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
+  project_id  = var.project
+  region      = var.region
+  name        = "orch-framework-scheduling-function"
+  bucket_name = "${var.project}-scheduling-function-bucket"
+  bucket_config = {
+    force_destroy = true
+  }
+  bundle_config = {
+    source_dir  = "../functions/orchestration-helpers/scheduling-function"
+    output_path = "bundle-orch-framework-scheduling-function.zip"
+  }
+  function_config = {
+    runtime = "python39"
+  }
+  environment_variables = {
+    WORKFLOW_SCHEDULING_FIRESTORE_COLLECTION = "workflows_scheduling"
+  }
+  trigger_config = {
+    event_type = "google.cloud.firestore.document.v1.written"
+    event_filters = [
+      {
+        attribute = "database"
+        value="(default)"
+      }
+    ]
+  }
+}
+
 module "simple-dataform-query-executor" {
   source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
   project_id  = var.project
