@@ -28,6 +28,7 @@ from google.cloud import error_reporting
 from cloudevents.http import CloudEvent
 from google.cloud import firestore
 from google.events.cloud import firestore as firestoredata
+from google.cloud import scheduler_v1
 
 
 # Access environment variables
@@ -40,9 +41,14 @@ client.setup_logging()
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 firestore_client = firestore.Client()
+scheduler_client = scheduler_v1.CloudSchedulerClient()
+
+PROJECT_ID = "dp-111-trf"
+LOCATION_ID ='us-central1'
 
 @functions_framework.cloud_event
 def main(cloud_event: CloudEvent) -> None:
+    print(f"EVENT::: path: {cloud_event}")
     firestore_payload = firestoredata.DocumentEventData()
     firestore_payload._pb.ParseFromString(cloud_event.data)
 
@@ -56,13 +62,33 @@ def main(cloud_event: CloudEvent) -> None:
 
     print(f"Function triggered by change to: {cloud_event['source']}")
 
-    print("\nOld value:")
-    print(firestore_payload.old_value)
+    #print("\nOld value:")
+    #print(firestore_payload.old_value)
 
-    print("\nNew value:")
-    print(firestore_payload.value)
+    #print("\nNew value:")
+    #print(firestore_payload.value)
 
     affected_doc = firestore_client.collection(collection_path).document(document_path)
-
+    create_job(document_path)
     cur_value = firestore_payload.value.fields["workflow_status"].string_value
     print(f"workflow_status: {cur_value} ")
+
+
+def create_job(job_name):
+    body = {"Hello": "World"}
+    parent= scheduler_client.common_location_path(PROJECT_ID,LOCATION_ID)
+    job={
+        "name":"projects/"+ PROJECT_ID+ "/locations/"+LOCATION_ID+"/jobs/" + job_name,
+        "description":"this is for testing ",
+        "http_target": {
+            "http_method": "POST",
+            "uri": "https://us-central1-dp-111-trf.cloudfunctions.net/orch-framework-intermediate-function",
+            "headers": {"Content-Type": "application/json"},
+            "oidc_token": {"service_account_email": "713778431230-compute@developer.gserviceaccount.com"},
+            "body": json.dumps(body).encode("utf-8"),
+        },
+        "schedule":"0 7 * * *",
+        "time_zone":"America/Los_Angeles",
+    }
+    scheduler_client.create_job(parent=parent,job=job)
+    print("JOB CREATED...........")
