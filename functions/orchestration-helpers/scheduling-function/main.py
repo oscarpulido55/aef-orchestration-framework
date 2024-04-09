@@ -13,15 +13,9 @@
 # limitations under the License.
 import os
 from google.cloud import bigquery
-from datetime import datetime
-import google.auth
-import urllib
-import urllib.error
-import urllib.request
 import json
 import logging
 import google.cloud.logging
-import google.auth.transport.requests
 import functions_framework
 import google.oauth2.id_token
 from google.cloud import error_reporting
@@ -32,7 +26,11 @@ from google.cloud import scheduler_v1
 
 
 # Access environment variables
-#WORKFLOW_SCHEDULING_PROJECT_ID = os.environ.get('WORKFLOW_CONTROL_PROJECT_ID')
+WORKFLOW_SCHEDULING_PROJECT_ID = os.environ.get('WORKFLOW_SCHEDULING_PROJECT_ID')
+WORKFLOW_SCHEDULING_PROJECT_NUMBER = os.environ.get('WORKFLOW_SCHEDULING_PROJECT_NUMBER')
+WORKFLOW_SCHEDULING_PROJECT_REGION = os.environ.get('WORKFLOW_SCHEDULING_PROJECT_REGION')
+WORKFLOW_SCHEDULING_FIRESTORE_COLLECTION = os.environ.get('WORKFLOW_SCHEDULING_FIRESTORE_COLLECTION')
+PIPELINE_EXECUTION_FUNCTION_NAME = os.environ.get('PIPELINE_EXECUTION_FUNCTION_NAME')
 
 # define clients
 error_client = error_reporting.Client()
@@ -43,52 +41,108 @@ logger.setLevel(logging.DEBUG)
 firestore_client = firestore.Client()
 scheduler_client = scheduler_v1.CloudSchedulerClient()
 
-PROJECT_ID = "dp-111-trf"
-LOCATION_ID ='us-central1'
-
 @functions_framework.cloud_event
 def main(cloud_event: CloudEvent) -> None:
     print(f"EVENT::: path: {cloud_event}")
     firestore_payload = firestoredata.DocumentEventData()
     firestore_payload._pb.ParseFromString(cloud_event.data)
 
-    path_parts = firestore_payload.value.name.split("/")
+    document_value = None
+    if firestore_payload.value:
+        document_value = firestore_payload.value
+    elif firestore_payload.old_value:
+        document_value = firestore_payload.old_value
+    path_parts = document_value.name.split("/")
     separator_idx = path_parts.index("documents")
     collection_path = path_parts[separator_idx + 1]
     document_path = "/".join(path_parts[(separator_idx + 2) :])
+    job_name = document_path
 
     print(f"Collection path: {collection_path}")
     print(f"Document path: {document_path}")
 
-    print(f"Function triggered by change to: {cloud_event['source']}")
+    if determine_job_type(firestore_payload.old_value, firestore_payload.value) in ('CREATE','UPDATE'):
+        crond_expression = firestore_payload.value.fields["crond_expression"].string_value
+        time_zone = firestore_payload.value.fields["time_zone"].string_value
+        workflow_properties = firestore_payload.value.fields["workflow_properties"].string_value
+        if determine_job_type(firestore_payload.old_value, firestore_payload.value) == 'CREATE':
+            create_job(job_name, crond_expression, time_zone, workflow_properties)
+        if determine_job_type(firestore_payload.old_value, firestore_payload.value) == 'UPDATE':
+            update_job(job_name, crond_expression, time_zone, workflow_properties)
+    if determine_job_type(firestore_payload.old_value, firestore_payload.value) in ('CREATE','UPDATE'):
+        change_status(job_name, firestore_payload.value)
+    if determine_job_type(firestore_payload.old_value, firestore_payload.value) == 'DELETE':
+        delete_job(job_name)
 
-    #print("\nOld value:")
-    #print(firestore_payload.old_value)
 
-    #print("\nNew value:")
-    #print(firestore_payload.value)
-
-    affected_doc = firestore_client.collection(collection_path).document(document_path)
-    create_job(document_path)
-    cur_value = firestore_payload.value.fields["workflow_status"].string_value
-    print(f"workflow_status: {cur_value} ")
+def determine_job_type(old_value ,new_value):
+    if new_value and not old_value:
+        return 'CREATE'
+    elif old_value and not new_value:
+        return 'DELETE'
+    elif old_value and new_value:
+        return 'UPDATE'
 
 
-def create_job(job_name):
-    body = {"Hello": "World"}
-    parent= scheduler_client.common_location_path(PROJECT_ID,LOCATION_ID)
+
+def create_job(job_name, crond_expression, time_zone, workflow_properties):
+    parent= scheduler_client.common_location_path(WORKFLOW_SCHEDULING_PROJECT_ID,WORKFLOW_SCHEDULING_PROJECT_REGION)
     job={
-        "name":"projects/"+ PROJECT_ID+ "/locations/"+LOCATION_ID+"/jobs/" + job_name,
-        "description":"this is for testing ",
+        "name":"projects/"+ WORKFLOW_SCHEDULING_PROJECT_ID+ "/locations/"+WORKFLOW_SCHEDULING_PROJECT_REGION+"/jobs/" + job_name,
+        "description":"workflows scheduler job create",
         "http_target": {
             "http_method": "POST",
-            "uri": "https://us-central1-dp-111-trf.cloudfunctions.net/orch-framework-intermediate-function",
+            "uri": f"https://{WORKFLOW_SCHEDULING_PROJECT_REGION}-{WORKFLOW_SCHEDULING_PROJECT_ID}.cloudfunctions.net/{PIPELINE_EXECUTION_FUNCTION_NAME}" ,
             "headers": {"Content-Type": "application/json"},
-            "oidc_token": {"service_account_email": "713778431230-compute@developer.gserviceaccount.com"},
-            "body": json.dumps(body).encode("utf-8"),
+            "oidc_token": {"service_account_email": WORKFLOW_SCHEDULING_PROJECT_NUMBER + "-compute@developer.gserviceaccount.com"},
+            "body": json.dumps(workflow_properties).encode("utf-8"),
         },
-        "schedule":"0 7 * * *",
-        "time_zone":"America/Los_Angeles",
+        "schedule":crond_expression,
+        "time_zone":time_zone,
     }
     scheduler_client.create_job(parent=parent,job=job)
     print("JOB CREATED...........")
+
+
+def update_job(job_name, crond_expression, time_zone, workflow_properties):
+    job={
+        "name":"projects/"+ WORKFLOW_SCHEDULING_PROJECT_ID+ "/locations/"+WORKFLOW_SCHEDULING_PROJECT_REGION+"/jobs/" + job_name,
+        "description":"workflows scheduler job update",
+        "http_target": {
+            "http_method": "POST",
+            "uri": f"https://{WORKFLOW_SCHEDULING_PROJECT_REGION}-{WORKFLOW_SCHEDULING_PROJECT_ID}.cloudfunctions.net/{PIPELINE_EXECUTION_FUNCTION_NAME}" ,
+            "headers": {"Content-Type": "application/json"},
+            "oidc_token": {"service_account_email": WORKFLOW_SCHEDULING_PROJECT_NUMBER + "-compute@developer.gserviceaccount.com"},
+            "body": json.dumps(workflow_properties).encode("utf-8"),
+        },
+        "schedule":crond_expression,
+        "time_zone":time_zone,
+    }
+    scheduler_client.update_job(job=job)
+    print("JOB UPDATED...........")
+
+
+def delete_job(job_name):
+    final_job_name = "projects/"+ WORKFLOW_SCHEDULING_PROJECT_ID+ "/locations/"+WORKFLOW_SCHEDULING_PROJECT_REGION+"/jobs/" + job_name
+    scheduler_client.delete_job(name=final_job_name)
+    print("JOB DELETED...........")
+
+
+def change_status(job_name, new_value):
+    workflow_status = new_value.fields["workflow_status"].string_value
+    print(f"workflow_status: {workflow_status} ")
+    if workflow_status == 'DISABLED':
+        pause_job(job_name)
+    if workflow_status == 'ENABLED':
+        resume_job(job_name)
+
+
+def pause_job(job_name):
+    final_job_name = "projects/"+ WORKFLOW_SCHEDULING_PROJECT_ID+ "/locations/"+WORKFLOW_SCHEDULING_PROJECT_REGION+"/jobs/" + job_name
+    scheduler_client.pause_job(name=final_job_name)
+    print("JOB PAUSED...........")
+
+def resume_job(job_name):
+    final_job_name = "projects/"+ WORKFLOW_SCHEDULING_PROJECT_ID+ "/locations/"+WORKFLOW_SCHEDULING_PROJECT_REGION+"/jobs/" + job_name
+    scheduler_client.resume_job(name=final_job_name)
+    print("JOB RESUMED...........")

@@ -16,6 +16,7 @@ python3 firestore_crud.py --gcp_project dp-111-trf \
                           --workflow_name workflow1 \
                           --operation_type CREATE \
                           --crond_expression '0 7 * * *' \
+                          --time_zone 'America/Los_Angeles' \
                           --date_format '%Y-%m-%d' \
                           --workflow_status ENABLED \
                           --workflow_properties '{"database_project_id":"prj-111"}'

@@ -15,7 +15,13 @@
  */
 
 variable "project" {
-  description = "Project where the AEF Orchestration Framework will be deployed."
+  description = "Project ID where the AEF Orchestration Framework will be deployed."
+  type        = string
+  nullable    = false
+}
+
+variable "project_number" {
+  description = "Project number where the AEF Orchestration Framework will be deployed."
   type        = string
   nullable    = false
 }
@@ -49,3 +55,11 @@ variable "operator_email" {
   type        = string
   nullable    = false
 }
+
+variable "workflows_scheduling_table_name" {
+  description = "workflows scheduling table name"
+  type        = string
+  nullable    = false
+  default     = "workflows_scheduling"
+}
+

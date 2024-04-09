@@ -14,6 +14,29 @@
  * limitations under the License.
  */
 
+module "pipeline-executor-function" {
+  source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
+  project_id  = var.project
+  region      = var.region
+  name        = "orch-framework-pipeline-executor-function"
+  bucket_name = "${var.project}-pipeline-executor-function-bucket"
+  bucket_config = {
+    force_destroy = true
+  }
+  bundle_config = {
+    source_dir  = "../functions/orchestration-helpers/pipeline-executor-function"
+    output_path = "bundle-orch-framework-pipeline-executor-function.zip"
+  }
+  function_config = {
+    runtime = "python39"
+  }
+  environment_variables = {
+    WORKFLOW_CONTROL_PROJECT_ID = var.project
+    WORKFLOW_CONTROL_DATASET_ID = module.bigquery-dataset.dataset_id
+    WORKFLOW_CONTROL_TABLE_ID = "workflows_control"
+  }
+}
+
 module "intermediate-function" {
   source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
   project_id  = var.project
@@ -57,7 +80,11 @@ module "scheduling-function" {
     runtime = "python39"
   }
   environment_variables = {
-    WORKFLOW_SCHEDULING_FIRESTORE_COLLECTION = "workflows_scheduling"
+    WORKFLOW_SCHEDULING_FIRESTORE_COLLECTION = var.workflows_scheduling_table_name
+    WORKFLOW_SCHEDULING_PROJECT_ID = var.project
+    WORKFLOW_SCHEDULING_PROJECT_NUMBER = var.project_number
+    WORKFLOW_SCHEDULING_PROJECT_REGION = var.region
+    PIPELINE_EXECUTION_FUNCTION_NAME = module.pipeline-executor-function.function_name
   }
   trigger_config = {
     event_type = "google.cloud.firestore.document.v1.written"

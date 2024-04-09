@@ -24,13 +24,13 @@ def main(args, loglevel):
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
     db = firestore.Client(project=args.gcp_project)
     if args.operation_type in('CREATE','UPDATE'):
-        workflow_properties = json.loads(args.workflow_properties)
         data = {
             "workflows_name": args.workflow_name,
             "crond_expression": args.crond_expression,
+            "time_zone": args.time_zone,
             "date_format": args.date_format,
             "workflow_status": args.workflow_status,
-            "workflow_properties": workflow_properties
+            "workflow_properties": args.workflow_properties
         }
         if args.operation_type == 'CREATE':
             create_doc(db, data)
@@ -69,6 +69,7 @@ if __name__ == '__main__':
     args, unknown = parser.parse_known_args()
     if args.operation_type in ('CREATE','UPDATE'):
         parser.add_argument("--crond_expression",help="crond expression to schedlue the workflows. (eg. '0 7 * * *')", required=True)
+        parser.add_argument("--time_zone",help="time zone associated with crond expression. (eg. 'America/Los_Angeles')", required=True)
         parser.add_argument("--date_format",help="python date format to be passed to the workflow execution (eg. '%Y-%m-%d')", required=True)
         parser.add_argument("--workflow_status",help="workflow status can be 'ENABLED' or 'DISABLED' to disable a workflow execution temporarily", required=True)
         parser.add_argument("--workflow_properties",help="properties to be passed as workflow input (eg. '{\"database_project_id\":\"prj-111\"}')", default='{}')
