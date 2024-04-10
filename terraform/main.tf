@@ -34,6 +34,7 @@ module "pipeline-executor-function" {
     WORKFLOW_CONTROL_PROJECT_ID = var.project
     WORKFLOW_CONTROL_DATASET_ID = module.bigquery-dataset.dataset_id
     WORKFLOW_CONTROL_TABLE_ID = "workflows_control"
+    WORKFLOWS_LOCATION = var.region
   }
 }
 

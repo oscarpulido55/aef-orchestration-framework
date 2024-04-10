@@ -1,42 +1,25 @@
-sh ../../data-processing-engines/simple-dataform-query-executor/test.sh false
-
-project=pso-amex-data-platform
-location=us-central1
-
-job_name=J01_etl_step_1
-workflow_name=workflow1
-execution_id=executionId1
+project='dp-111-trf'
+location='us-central1'
+workflow_name='workflow1'
 start_date="2019-01-01"
 end_date="2019-01-01"
+validation_date_pattern="%Y-%m-%d"
+same_day_execution="YESTERDAY"
+workflow_status="ENABLED"
+workflow_properties='{"database_project_id":"prj-111"}'
 
-async_job_id=$(curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-intermediate-function \
+async_job_id=$(curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-pipeline-executor-function \
 -H "Authorization: bearer $(gcloud auth print-identity-token)" \
 -H "Content-Type: application/json" \
 -d '{
-    "call_type": "get_id",
-    "job_name": "'$job_name'",
-    "workflow_name": "'$workflow_name'",
-    "execution_id" : "'$execution_id'",
-    "query_variables":{
-        "start_date" : "'$start_date'",
-        "end_date" : "'$end_date'"
-    }
+    "workflows_name": "'$workflow_name'",
+    "validation_date_pattern": "'$validation_date_pattern'",
+    "same_day_execution": "'$same_day_execution'",
+    "workflow_status": "'$workflow_status'",
+    "workflow_properties": '$workflow_properties',
+    "start_date" : "'$start_date'",
+    "end_date" : "'$end_date'"
 }')
 
-echo "Job ID: "
+echo "Workflow Execution ID: "
 echo $async_job_id
-
-curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-intermediate-function \
--H "Authorization: bearer $(gcloud auth print-identity-token)" \
--H "Content-Type: application/json" \
--d '{
-    "call_type": "get_status",
-    "job_name": "'$job_name'",
-    "workflow_name": "'$workflow_name'",
-    "execution_id" : "'$execution_id'",
-    "async_job_id" : "'$async_job_id'",
-    "query_variables":{
-        "start_date" : "'$start_date'",
-        "end_date" : "'$end_date'"
-    }
-}'

@@ -63,12 +63,21 @@ def main(cloud_event: CloudEvent) -> None:
 
     if determine_job_type(firestore_payload.old_value, firestore_payload.value) in ('CREATE','UPDATE'):
         crond_expression = firestore_payload.value.fields["crond_expression"].string_value
+        validation_date_pattern = firestore_payload.value.fields["date_format"].string_value
         time_zone = firestore_payload.value.fields["time_zone"].string_value
+        workflow_status = firestore_payload.value.fields["workflow_status"].string_value
         workflow_properties = firestore_payload.value.fields["workflow_properties"].string_value
+        workflow_parameters = {
+            "workflows_name" : job_name,
+            "validation_date_pattern" : validation_date_pattern,
+            "same_day_execution" : "YESTERDAY",
+            "workflow_status" : workflow_status,
+            "workflow_properties" : workflow_properties
+        }
         if determine_job_type(firestore_payload.old_value, firestore_payload.value) == 'CREATE':
-            create_job(job_name, crond_expression, time_zone, workflow_properties)
+            create_job(job_name, crond_expression, time_zone, workflow_parameters)
         if determine_job_type(firestore_payload.old_value, firestore_payload.value) == 'UPDATE':
-            update_job(job_name, crond_expression, time_zone, workflow_properties)
+            update_job(job_name, crond_expression, time_zone, workflow_parameters)
     if determine_job_type(firestore_payload.old_value, firestore_payload.value) in ('CREATE','UPDATE'):
         change_status(job_name, firestore_payload.value)
     if determine_job_type(firestore_payload.old_value, firestore_payload.value) == 'DELETE':
@@ -85,7 +94,7 @@ def determine_job_type(old_value ,new_value):
 
 
 
-def create_job(job_name, crond_expression, time_zone, workflow_properties):
+def create_job(job_name, crond_expression, time_zone, workflow_parameters):
     parent= scheduler_client.common_location_path(WORKFLOW_SCHEDULING_PROJECT_ID,WORKFLOW_SCHEDULING_PROJECT_REGION)
     job={
         "name":"projects/"+ WORKFLOW_SCHEDULING_PROJECT_ID+ "/locations/"+WORKFLOW_SCHEDULING_PROJECT_REGION+"/jobs/" + job_name,
@@ -95,7 +104,7 @@ def create_job(job_name, crond_expression, time_zone, workflow_properties):
             "uri": f"https://{WORKFLOW_SCHEDULING_PROJECT_REGION}-{WORKFLOW_SCHEDULING_PROJECT_ID}.cloudfunctions.net/{PIPELINE_EXECUTION_FUNCTION_NAME}" ,
             "headers": {"Content-Type": "application/json"},
             "oidc_token": {"service_account_email": WORKFLOW_SCHEDULING_PROJECT_NUMBER + "-compute@developer.gserviceaccount.com"},
-            "body": json.dumps(workflow_properties).encode("utf-8"),
+            "body": json.dumps(workflow_parameters).encode("utf-8"),
         },
         "schedule":crond_expression,
         "time_zone":time_zone,
@@ -104,7 +113,7 @@ def create_job(job_name, crond_expression, time_zone, workflow_properties):
     print("JOB CREATED...........")
 
 
-def update_job(job_name, crond_expression, time_zone, workflow_properties):
+def update_job(job_name, crond_expression, time_zone, workflow_parameters):
     job={
         "name":"projects/"+ WORKFLOW_SCHEDULING_PROJECT_ID+ "/locations/"+WORKFLOW_SCHEDULING_PROJECT_REGION+"/jobs/" + job_name,
         "description":"workflows scheduler job update",
@@ -113,7 +122,7 @@ def update_job(job_name, crond_expression, time_zone, workflow_properties):
             "uri": f"https://{WORKFLOW_SCHEDULING_PROJECT_REGION}-{WORKFLOW_SCHEDULING_PROJECT_ID}.cloudfunctions.net/{PIPELINE_EXECUTION_FUNCTION_NAME}" ,
             "headers": {"Content-Type": "application/json"},
             "oidc_token": {"service_account_email": WORKFLOW_SCHEDULING_PROJECT_NUMBER + "-compute@developer.gserviceaccount.com"},
-            "body": json.dumps(workflow_properties).encode("utf-8"),
+            "body": json.dumps(workflow_parameters).encode("utf-8"),
         },
         "schedule":crond_expression,
         "time_zone":time_zone,
