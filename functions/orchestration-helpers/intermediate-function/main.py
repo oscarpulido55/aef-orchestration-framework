@@ -45,6 +45,18 @@ logger.setLevel(logging.DEBUG)
 
 @functions_framework.http
 def main(request):
+    """
+    Main function, likely triggered by an HTTP request from cloud workflows.
+    Acts as an intermediary between workflows and executor functions, taking care of the non
+    functional requirements as process metadata creation , error handling, notifications management,
+    checkpoint management, etc.
+
+    Args:
+        request: The incoming HTTP request object.
+
+    Returns:
+        str: The status of the query execution or the job ID (if asynchronous).
+    """
     request_json = request.get_json()
     print("event: " + str(request_json))
     try:
@@ -74,6 +86,16 @@ def main(request):
 
 
 def evaluate_error(message):
+    """
+    Evaluates if a message has an error or not
+
+    Args:
+        str: message to evaluate
+
+    Returns:
+        raise Exception if the word "exception" found in message
+        str: original message coming from executor functions
+    """
     if 'error' in message.lower() or 'exception' in message.lower():
         raise Exception(message)
     return message
@@ -81,6 +103,14 @@ def evaluate_error(message):
 
 #TODO Fix log message
 def log_step_bigquery(request_json, status):
+    """
+    Logs a new entry in workflows bigquery table
+
+    Args:
+        status: status of the execution
+        request_json: event object containing info to log
+
+    """
     current_datetime = datetime.now().isoformat()
     data = {
         'workflow_execution_id': request_json['execution_id'],
@@ -106,6 +136,17 @@ def log_step_bigquery(request_json, status):
 
 
 def call_custom_function(request_json, async_job_id):
+    """
+    calls an executor function passed by parameter
+
+    Args:
+        request_json: json input object with parameters
+        async_job_id: if filled, function ask by the execution status. if not, launches the execution for the first time
+
+    Returns:
+        raise Exception if the word "exception" found in message
+        str: original message coming from executor functions
+    """
     workflow_name = request_json['workflow_name']
     job_name = request_json['job_name']
     params = {

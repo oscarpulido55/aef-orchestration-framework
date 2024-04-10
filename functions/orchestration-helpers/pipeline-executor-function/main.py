@@ -46,6 +46,15 @@ workflows_client = workflows_v1.WorkflowsClient()
 
 @functions_framework.http
 def main(request):
+    """
+    Main function, likely triggered by an HTTP request
+    its main responsibility is to trigger a cloud workflows pipeline, parsing start and end
+    execution dates, and logging to bigquery control table.
+
+    Args:
+        request: The incoming HTTP request object.
+
+    """
     event = request.get_json()
     print("event: " + str(event))
     start_date = event.get('start_date')
@@ -76,6 +85,21 @@ def main(request):
 def call_workflows(workflows_name, start_date, end_date,
                    validation_date_pattern, workflow_properties,
                    same_day_execution):
+    """
+    calls a cloud workflows pipeline passed by parameter
+
+    Args:
+        workflows_name: name of te cloud workflows to execute
+        start_date: start date passed by parameter to the workflows pipeline ( normally a data pipeline )
+        end_date: end date passed by parameter to the workflows pipeline ( normally a data pipeline )
+        validation_date_pattern: python data pattern format to apply to start and end dates
+        workflow_properties: custom properties passed to the cloud workflows.
+        same_day_execution: can be YESTERDAY, TODAY or YESTERDAY_TODAY indicating dates that should be passed in
+        start and end dates, if not received by parameter.
+
+    Returns:
+        execution_id: cloud workflows unique execution identifier
+    """
     print("Launching Custom Workflow.....")
 
     if start_date is None:  # it means is not done manually
@@ -103,7 +127,17 @@ def call_workflows(workflows_name, start_date, end_date,
 
 
 def process_dates(validation_date_pattern, same_day_execution):
-    """method to process start and end dates when no received by parameter"""
+    """method to process start and end dates when no received by parameter
+
+    Args:
+        validation_date_pattern: python data pattern format to apply to start and end dates
+        same_day_execution: can be YESTERDAY, TODAY or YESTERDAY_TODAY indicating dates that should be passed in
+        start and end dates, if not received by parameter.
+
+    Returns:
+        Start and end dates parsed
+
+    """
     today = date.today()
     # if is a daily pattern, execute the previous day
     if validation_date_pattern == DEFAULT_TIME_FORMAT:
@@ -130,6 +164,14 @@ def process_dates(validation_date_pattern, same_day_execution):
 
 #TODO complete log step
 def log_step_bigquery(execution_id, event):
+    """
+    Logs a new entry in workflows bigquery table
+
+    Args:
+        execution_id: id of the execution
+        event: event object containing info to log
+
+    """
     current_datetime = datetime.now().isoformat()
     data = {
         'workflow_execution_id': execution_id,

@@ -43,6 +43,15 @@ scheduler_client = scheduler_v1.CloudSchedulerClient()
 
 @functions_framework.cloud_event
 def main(cloud_event: CloudEvent) -> None:
+    """
+    Main function, likely triggered by an eventarc event coming from firestore.
+    Acts as a lif cycle manager for cloud scheduling rules that triggers cloud workflows pipelines through
+    pipeline executor function, creating, updating and deleting them when necessary.
+
+    Args:
+        request: The incoming eventarc request object.
+
+    """
     print(f"EVENT::: path: {cloud_event}")
     firestore_payload = firestoredata.DocumentEventData()
     firestore_payload._pb.ParseFromString(cloud_event.data)
@@ -85,6 +94,16 @@ def main(cloud_event: CloudEvent) -> None:
 
 
 def determine_job_type(old_value ,new_value):
+    """
+    Evaluates what type of event was triggered in firestore: CREATE, UPDATE or DELETE
+
+    Args:
+        old value: old firestore value coming in trigger info
+        new value:  new firestore value coming in trigger info
+
+    Returns:
+        type of event
+    """
     if new_value and not old_value:
         return 'CREATE'
     elif old_value and not new_value:
@@ -95,6 +114,16 @@ def determine_job_type(old_value ,new_value):
 
 
 def create_job(job_name, crond_expression, time_zone, workflow_parameters):
+    """
+    creates a scheduler job , using given parameters.
+
+    Args:
+        job_name: name for the scheduler job, should be the same as cloud workflows name
+        crond_expression:  crond linux expression used to trigger the cloud scheduler rule
+        time_zone: timezone associated with scheduler execution.
+        workflow_parameters: parameters sent to the cloud workflows invocation
+
+    """
     parent= scheduler_client.common_location_path(WORKFLOW_SCHEDULING_PROJECT_ID,WORKFLOW_SCHEDULING_PROJECT_REGION)
     job={
         "name":"projects/"+ WORKFLOW_SCHEDULING_PROJECT_ID+ "/locations/"+WORKFLOW_SCHEDULING_PROJECT_REGION+"/jobs/" + job_name,
@@ -114,6 +143,16 @@ def create_job(job_name, crond_expression, time_zone, workflow_parameters):
 
 
 def update_job(job_name, crond_expression, time_zone, workflow_parameters):
+    """
+    updates a scheduler job , using given parameters.
+
+    Args:
+        job_name: name for the scheduler job, should be the same as cloud workflows name
+        crond_expression:  crond linux expression used to trigger the cloud scheduler rule
+        time_zone: timezone associated with scheduler execution.
+        workflow_parameters: parameters sent to the cloud workflows invocation
+
+    """
     job={
         "name":"projects/"+ WORKFLOW_SCHEDULING_PROJECT_ID+ "/locations/"+WORKFLOW_SCHEDULING_PROJECT_REGION+"/jobs/" + job_name,
         "description":"workflows scheduler job update",
@@ -132,12 +171,27 @@ def update_job(job_name, crond_expression, time_zone, workflow_parameters):
 
 
 def delete_job(job_name):
+    """
+    deletes a scheduler job , using given parameters.
+
+    Args:
+        job_name: name for the scheduler job, should be the same as cloud workflows name
+
+    """
     final_job_name = "projects/"+ WORKFLOW_SCHEDULING_PROJECT_ID+ "/locations/"+WORKFLOW_SCHEDULING_PROJECT_REGION+"/jobs/" + job_name
     scheduler_client.delete_job(name=final_job_name)
     print("JOB DELETED...........")
 
 
 def change_status(job_name, new_value):
+    """
+    evaluates if a cloud scheduler rule must be paused or resumed, depending on firestore trigger
+
+    Args:
+        job_name: name for the scheduler job, should be the same as cloud workflows name
+        new value:  new firestore value coming in trigger info
+
+    """
     workflow_status = new_value.fields["workflow_status"].string_value
     print(f"workflow_status: {workflow_status} ")
     if workflow_status == 'DISABLED':
@@ -147,11 +201,25 @@ def change_status(job_name, new_value):
 
 
 def pause_job(job_name):
+    """
+    pauses a scheduler job , using given parameters.
+
+    Args:
+        job_name: name for the scheduler job, should be the same as cloud workflows name
+
+    """
     final_job_name = "projects/"+ WORKFLOW_SCHEDULING_PROJECT_ID+ "/locations/"+WORKFLOW_SCHEDULING_PROJECT_REGION+"/jobs/" + job_name
     scheduler_client.pause_job(name=final_job_name)
     print("JOB PAUSED...........")
 
 def resume_job(job_name):
+    """
+    resumes a scheduler job , using given parameters.
+
+    Args:
+        job_name: name for the scheduler job, should be the same as cloud workflows name
+
+    """
     final_job_name = "projects/"+ WORKFLOW_SCHEDULING_PROJECT_ID+ "/locations/"+WORKFLOW_SCHEDULING_PROJECT_REGION+"/jobs/" + job_name
     scheduler_client.resume_job(name=final_job_name)
     print("JOB RESUMED...........")
