@@ -6,7 +6,7 @@ end_date="2019-01-01"
 validation_date_pattern="%Y-%m-%d"
 same_day_execution="YESTERDAY"
 workflow_status="ENABLED"
-workflow_properties='{"database_project_id":"prj-111"}'
+workflow_properties='{"dataform_location":"europe-west2","dataform_project_id":"dp-111-trf","repository_name":"TestRepoDataform"}'
 
 async_job_id=$(curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-pipeline-executor-function \
 -H "Authorization: bearer $(gcloud auth print-identity-token)" \

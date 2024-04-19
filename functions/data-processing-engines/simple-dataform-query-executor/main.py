@@ -45,10 +45,12 @@ def main(request):
     print("event:" + str(request_json))
 
     try:
-        dataform_location = request_json['dataform_location']
-        dataform_project_id = request_json['dataform_project_id']
-        repository_name = request_json['repository_name']
-        file_path = request_json['file_path']
+        dataform_location = request_json['workflow_properties']['dataform_location']
+        dataform_project_id = request_json['workflow_properties']['dataform_project_id']
+        repository_name = request_json['workflow_properties']['repository_name']
+        workflow_name = request_json['workflow_name']
+        job_name = request_json['job_name']
+        file_path = f"definitions/{workflow_name }/{job_name}.sqlx"
 
         job_id = request_json.get('job_id', None)
         query_variables = request_json.get('query_variables', None)

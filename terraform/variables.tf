@@ -32,24 +32,6 @@ variable "region" {
   nullable    = false
 }
 
-variable "dataform_project" {
-  description = "Project where the dataform repositories reside."
-  type        = string
-  nullable    = false
-}
-
-variable "dataform_location" {
-  description = "Location of the dataform project repository"
-  type        = string
-  nullable    = false
-}
-
-variable "dataform_repository" {
-  description = "Name of the dataform repository"
-  type        = string
-  nullable    = false
-}
-
 variable "operator_email" {
   description = "email of the data platform operator for error notifications"
   type        = string

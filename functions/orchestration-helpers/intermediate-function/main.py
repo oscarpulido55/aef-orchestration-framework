@@ -31,10 +31,6 @@ WORKFLOW_CONTROL_PROJECT_ID = os.environ.get('WORKFLOW_CONTROL_PROJECT_ID')
 WORKFLOW_CONTROL_DATASET_ID = os.environ.get('WORKFLOW_CONTROL_DATASET_ID')
 WORKFLOW_CONTROL_TABLE_ID = os.environ.get('WORKFLOW_CONTROL_TABLE_ID')
 
-DATAFORM_LOCATION = os.environ.get('DATAFORM_LOCATION')
-DATAFORM_PROJECT = os.environ.get('DATAFORM_PROJECT')
-DATAFORM_REPO_NAME = os.environ.get('DATAFORM_REPO_NAME')
-
 # define clients
 bq_client = bigquery.Client(project=WORKFLOW_CONTROL_PROJECT_ID)
 error_client = error_reporting.Client()
@@ -149,11 +145,11 @@ def call_custom_function(request_json, async_job_id):
     """
     workflow_name = request_json['workflow_name']
     job_name = request_json['job_name']
+    workflow_properties = request_json['workflow_properties']
     params = {
-        "dataform_location": DATAFORM_LOCATION,
-        "dataform_project_id": DATAFORM_PROJECT,
-        "repository_name": DATAFORM_REPO_NAME,
-        "file_path": "definitions/" + workflow_name + "/" + job_name + ".sqlx",
+        "workflow_properties": workflow_properties,
+        "workflow_name": workflow_name,
+        "job_name": job_name,
         "query_variables": {
             "${dataform.projectConfig.vars.start_date}": "'" + request_json['query_variables']['start_date'] + "'",
             "${dataform.projectConfig.vars.end_date}": "'" + request_json['query_variables']['end_date'] + "'"

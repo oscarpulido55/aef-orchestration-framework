@@ -90,10 +90,13 @@ if [ "$delete_dataform_repo" = "true" ]; then
     -H "Authorization: bearer $(gcloud auth print-identity-token)" \
     -H "Content-Type: application/json" \
     -d '{
-      "dataform_location": "'$dataform_location'",
-      "dataform_project_id": "'$dataform_project_id'",
-      "repository_name": "'$repository_id'",
-      "file_path":  "'$filepath'",
+      "workflow_properties":{
+        "dataform_location": "'$dataform_location'",
+        "dataform_project_id": "'$dataform_project_id'",
+        "repository_name": "'$repository_id'",
+      },
+      "workflow_name":  "'$workflow_name'",
+      "job_name":  "'$job_name'",
       "query_variables":{
           "${dataform.projectConfig.vars.start_date}":"'$start_date'"
       }

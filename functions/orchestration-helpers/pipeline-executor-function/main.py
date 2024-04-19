@@ -106,6 +106,8 @@ def call_workflows(workflows_name, start_date, end_date,
         start_date, end_date = process_dates(validation_date_pattern, same_day_execution)
     if end_date is None:
         end_date = start_date
+    if isinstance(workflow_properties, str):
+        workflow_properties = json.loads(workflow_properties)
     arguments = {
            "workflow_name": workflows_name,
            "query_variables": {

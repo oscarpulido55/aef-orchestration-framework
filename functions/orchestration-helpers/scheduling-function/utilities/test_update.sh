@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+workflow_properties='{"dataform_location":"europe-west2","dataform_project_id":"dp-111-trf","repository_name":"TestRepoDataform"}'
+
 python3 firestore_crud.py --gcp_project dp-111-trf \
                           --workflow_name workflow1 \
                           --operation_type UPDATE \
@@ -19,4 +21,4 @@ python3 firestore_crud.py --gcp_project dp-111-trf \
                           --time_zone 'America/Los_Angeles' \
                           --date_format '%Y-%m-%d' \
                           --workflow_status DISABLED \
-                          --workflow_properties '{"database_project_id":"prj-111"}'
+                          --workflow_properties $workflow_properties

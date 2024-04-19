@@ -55,9 +55,6 @@ module "intermediate-function" {
     runtime = "python39"
   }
   environment_variables = {
-    DATAFORM_LOCATION = var.dataform_location
-    DATAFORM_PROJECT = var.dataform_project
-    DATAFORM_REPO_NAME = var.dataform_repository
     WORKFLOW_CONTROL_PROJECT_ID = var.project
     WORKFLOW_CONTROL_DATASET_ID = module.bigquery-dataset.dataset_id
     WORKFLOW_CONTROL_TABLE_ID = "workflows_control"
@@ -98,27 +95,6 @@ module "scheduling-function" {
   }
 }
 
-module "simple-dataform-query-executor" {
-  source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
-  project_id  = var.project
-  region      = var.region
-  name        = "orch-framework-simple-dataform-query-executor"
-  bucket_name = "${var.project}-simple-dataform-query-executor-bucket"
-  bucket_config = {
-    force_destroy = true
-  }
-  bundle_config = {
-    source_dir  = "../functions/data-processing-engines/simple-dataform-query-executor"
-    output_path = "bundle-orch-framework-simple-dataform-query-executor.zip"
-  }
-  function_config = {
-    runtime = "python39"
-  }
-  environment_variables = {
-      BIGQUERY_PROJECT = var.dataform_project
-  }
-
-}
 
 module "bigquery-dataset" {
   source     = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/bigquery-dataset"
