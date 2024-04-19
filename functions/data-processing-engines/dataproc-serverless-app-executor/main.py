@@ -45,20 +45,22 @@ def main(request):
 
     try:
         workflow_properties= request_json.get('workflow_properties', None)
-        workflow_name = request_json['workflow_name']
-        job_name = request_json['job_name']
+        workflow_name = request_json.get('workflow_name')
+        job_name = request_json.get('job_name')
         query_variables = request_json.get('query_variables', None)
+        job_id = request_json.get('job_id', None)
 
-        status_or_job_id = execute_job_or_get_status(workflow_name, job_name, query_variables, workflow_properties)
+        status_or_job_id = execute_job_or_get_status(job_id, workflow_name, job_name, query_variables, workflow_properties)
 
         if status_or_job_id.startswith('aef_'):
-            print(f"Running Query, track it with Job ID: {status_or_job_id}")
+            print(f"Running Job, track it with Job ID: {status_or_job_id}")
         else:
-            print(f"Query finished with status: {status_or_job_id}")
+            print(f"Call finished with status: {status_or_job_id}")
 
         return status_or_job_id
     except Exception as error:
         err_message = "Exception: " + repr(error)
+        print(err_message)
         response = {
             "error": error.__class__.__name__,
             "message": repr(error)
@@ -66,7 +68,14 @@ def main(request):
         return response
 
 
-def execute_job_or_get_status(workflow_name, job_name, query_variables, workflow_properties):
+def execute_job_or_get_status(job_id, workflow_name, job_name, query_variables, workflow_properties):
+    if job_id:
+        return get_job_status(job_id, workflow_properties)
+    else:
+        return create_batch_job(workflow_name, job_name, query_variables, workflow_properties)
+
+
+def create_batch_job(workflow_name, job_name, query_variables, workflow_properties):
     """
     calls a dataproc serverless job.
 
@@ -76,14 +85,14 @@ def execute_job_or_get_status(workflow_name, job_name, query_variables, workflow
         str: Id or status of the dataproc serverless batch job
     """
 
-    dataproc_serverless_project_id= workflow_properties['dataproc_serverless_project_id'],
-    dataproc_serverless_region= workflow_properties['dataproc_serverless_region'],
-    jar_file_location= workflow_properties['jar_file_location'],
-    spark_history_server_cluster= workflow_properties['spark_history_server_cluster'],
-    spark_app_main_class= workflow_properties['spark_app_main_class'],
-    spark_app_config_file= workflow_properties['spark_app_config_file'],
-    dataproc_serverless_runtime_version= workflow_properties['dataproc_serverless_runtime_version'],
-    spark_app_properties= workflow_properties['spark_app_properties'],
+    dataproc_serverless_project_id= workflow_properties.get('dataproc_serverless_project_id')
+    dataproc_serverless_region= workflow_properties.get('dataproc_serverless_region')
+    jar_file_location= workflow_properties.get('jar_file_location')
+    spark_history_server_cluster= workflow_properties.get('spark_history_server_cluster')
+    spark_app_main_class= workflow_properties.get('spark_app_main_class')
+    spark_app_config_file= workflow_properties.get('spark_app_config_file')
+    dataproc_serverless_runtime_version= workflow_properties.get('dataproc_serverless_runtime_version')
+    spark_app_properties= workflow_properties.get('spark_app_properties')
     spark_history_server_cluster_path = f"projects/{dataproc_serverless_project_id}/regions/{dataproc_serverless_region}/clusters/{spark_history_server_cluster}"
 
     if isinstance(spark_app_properties, str):
@@ -100,7 +109,7 @@ def execute_job_or_get_status(workflow_name, job_name, query_variables, workflow
             "jar_file_uris": [ jar_file_location ],
             "main_class": spark_app_main_class,
             "args": [
-                spark_app_config_file,
+                spark_app_config_file
             ]
         },
         "runtime_config": {
@@ -110,25 +119,59 @@ def execute_job_or_get_status(workflow_name, job_name, query_variables, workflow
         "environment_config": {
             "peripherals_config": {
                 "spark_history_server_config": {
-                    "dataproc_cluster": spark_history_server_cluster_path,
+                    "dataproc_cluster": spark_history_server_cluster_path
                 },
             },
         },
 
     }
 
-    batch_id = f"batch-id-{timestamp}"
+    print(params)
 
-    url = (f"dataproc.googleapis.com/v1/projects/{dataproc_serverless_project_id}/"
-           f"locations/{dataproc_serverless_region}/batches/{batch_id}")
+    batch_id = f"aef-{timestamp}"
 
-    response = requests.post(url, data=params, headers=headers)
+    url = (f"https://dataproc.googleapis.com/v1/projects/{dataproc_serverless_project_id}/"
+           f"locations/{dataproc_serverless_region}/batches?batchId={batch_id}")
+
+    response = requests.post(url, json=params, headers=headers)
 
     if response.status_code == 200:
         print("response::" + str(response))
-        return "OK"
+        return batch_id
     else:
-        error_message = f"Dataproc API request failed. Status code:{response.status_code}"
+        error_message = f"Dataproc API CREATE request failed. Status code:{response.status_code}"
+        print(error_message)
+        print(response.text)
+        raise Exception(error_message)
+
+
+
+def get_job_status(job_id, workflow_properties):
+    """
+    gets the status of a dataproc serverless job
+
+    Args:
+        request_json (dict) : event dictionary
+    Returns:
+        str: status of the dataproc serverless batch job
+    """
+
+    dataproc_serverless_project_id= workflow_properties.get('dataproc_serverless_project_id')
+    dataproc_serverless_region= workflow_properties.get('dataproc_serverless_region')
+
+    credentials.refresh(Request())
+    headers = {"Authorization": f"Bearer {credentials.token}"}
+
+    url = (f"https://dataproc.googleapis.com/v1/projects/{dataproc_serverless_project_id}/"
+           f"locations/{dataproc_serverless_region}/batches/{job_id}")
+
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        print("response::" + str(response))
+        return response.json().get("state")
+    else:
+        error_message = f"Dataproc API GET request failed. Status code:{response.status_code}"
         print(error_message)
         print(response.text)
         raise Exception(error_message)

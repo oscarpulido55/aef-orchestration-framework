@@ -1,5 +1,7 @@
 #!/bin/bash
 
+location='us-central1'
+project='dp-111-trf'
 dataproc_serverless_project_id='diegodu-test-project-1'
 dataproc_serverless_region='us-central1'
 workflow_name='workflow1'
@@ -10,25 +12,43 @@ spark_history_server_cluster="example-history-server"
 spark_app_main_class="com.example.spark.cobol.app.SparkDvTestApp"
 spark_app_config_file="gs://test-image-dd-bucket/config.json"
 dataproc_serverless_runtime_version="1.1.57"
-spark_app_properties='{"spark.executor.instances": "2","spark.executor.core": "2"}'
+
+async_job_id=$(curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-dataproc-serverless-app-executor \
+-H "Authorization: bearer $(gcloud auth print-identity-token)" \
+-H "Content-Type: application/json" \
+-d '{
+  "workflow_name":  "'$workflow_name'",
+  "job_name":  "'$job_name'",
+  "workflow_properties":{
+          "dataproc_serverless_project_id": "'$dataproc_serverless_project_id'",
+          "dataproc_serverless_region": "'$dataproc_serverless_region'",
+          "jar_file_location": "'$jar_file_location'",
+          "spark_history_server_cluster": "'$spark_history_server_cluster'",
+           "spark_app_main_class": "'$spark_app_main_class'",
+          "spark_app_config_file": "'$spark_app_config_file'",
+          "dataproc_serverless_runtime_version": "'$dataproc_serverless_runtime_version'",
+          "spark_app_properties": {"spark.executor.instances": "2","spark.executor.core": "2"}
+
+  },
+  "query_variables":{
+      "${dataform.projectConfig.vars.start_date}":"'$start_date'"
+  }
+}')
+
+echo "Job ID: "
+echo $async_job_id
+
+sleep 10
 
 curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-dataproc-serverless-app-executor \
 -H "Authorization: bearer $(gcloud auth print-identity-token)" \
 -H "Content-Type: application/json" \
 -d '{
-  "workflow_properties":{
-    "dataproc_serverless_project_id": "'$dataproc_serverless_project_id'",
-    "dataproc_serverless_region": "'$dataproc_serverless_region'",
-    "jar_file_location": "'$jar_file_location'",
-    "spark_history_server_cluster": "'$spark_history_server_cluster'",
-    "spark_app_main_class": "'$spark_app_main_class'",
-    "spark_app_config_file": "'$spark_app_config_file'",
-    "dataproc_serverless_runtime_version": "'$dataproc_serverless_runtime_version'",
-    "spark_app_properties": "'$spark_app_properties'"
-  },
   "workflow_name":  "'$workflow_name'",
   "job_name":  "'$job_name'",
-  "query_variables":{
-      "${dataform.projectConfig.vars.start_date}":"'$start_date'"
+  "job_id":  "'$async_job_id'",
+  "workflow_properties":{
+          "dataproc_serverless_project_id": "'$dataproc_serverless_project_id'",
+          "dataproc_serverless_region": "'$dataproc_serverless_region'"
   }
 }'

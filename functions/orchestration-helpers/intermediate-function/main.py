@@ -175,7 +175,7 @@ def call_custom_function(request_json, async_job_id):
         # Handle the response
         if async_job_id == None and response.decode("utf-8").startswith("aef_"):
             return response.decode("utf-8")
-        if response.decode("utf-8") in ('DONE', 'SUCCESS'):
+        if response.decode("utf-8") in ('DONE', 'SUCCESS', 'SUCCEEDED'):
             return "success"
         if response.decode("utf-8") in ('PENDING', 'RUNNING'):
             return "running"
