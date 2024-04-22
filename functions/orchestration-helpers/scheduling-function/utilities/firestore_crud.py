@@ -23,6 +23,9 @@ WORKFLOWS_COLLECTION_DEFAULT_NAME = "workflows_scheduling"
 def main(args, loglevel):
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
     db = firestore.Client(project=args.gcp_project)
+    print(args.workflow_properties)
+    #workflow_props = json.loads(args.workflow_properties)
+    workflow_props = args.workflow_properties
     if args.operation_type in('CREATE','UPDATE'):
         data = {
             "workflows_name": args.workflow_name,
@@ -30,7 +33,7 @@ def main(args, loglevel):
             "time_zone": args.time_zone,
             "date_format": args.date_format,
             "workflow_status": args.workflow_status,
-            "workflow_properties": args.workflow_properties
+            "workflow_properties": workflow_props
         }
         if args.operation_type == 'CREATE':
             create_doc(db, data)

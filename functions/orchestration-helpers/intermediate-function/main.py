@@ -172,15 +172,18 @@ def call_custom_function(request_json, async_job_id):
         response = response.read()
 
         print('response: ' + str(response))
+        final_response = ''
         # Handle the response
-        if async_job_id == None and response.decode("utf-8").startswith("aef_"):
-            return response.decode("utf-8")
-        if response.decode("utf-8") in ('DONE', 'SUCCESS', 'SUCCEEDED'):
-            return "success"
-        if response.decode("utf-8") in ('PENDING', 'RUNNING'):
-            return "running"
+        if async_job_id == None and ( response.decode("utf-8").startswith("aef_") or response.decode("utf-8").startswith("aef-") ) :
+            final_response = response.decode("utf-8")
+        elif response.decode("utf-8") in ('DONE', 'SUCCESS', 'SUCCEEDED'):
+            final_response = "success"
+        elif response.decode("utf-8") in ('PENDING', 'RUNNING'):
+            final_response = "running"
         else:  # FAILURE
-            return  "Exception calling target function " + target_function_url.split('/')[-1] + ":" + response.decode('utf-8')
+            final_response = "Exception calling target function " + target_function_url.split('/')[-1] + ":" + response.decode('utf-8')
+        print("final response: " + final_response)
+        return final_response
     except (urllib.error.HTTPError)  as e:
         print('Exception: ' + repr(e))
         raise Exception("unexpected HTTP error in custom function: " + target_function_url.split('/')[-1] + ":" + repr(e))

@@ -52,7 +52,7 @@ def main(request):
 
         status_or_job_id = execute_job_or_get_status(job_id, workflow_name, job_name, query_variables, workflow_properties)
 
-        if status_or_job_id.startswith('aef_'):
+        if status_or_job_id.startswith('aef-'):
             print(f"Running Job, track it with Job ID: {status_or_job_id}")
         else:
             print(f"Call finished with status: {status_or_job_id}")
@@ -90,7 +90,7 @@ def create_batch_job(workflow_name, job_name, query_variables, workflow_properti
     jar_file_location= workflow_properties.get('jar_file_location')
     spark_history_server_cluster= workflow_properties.get('spark_history_server_cluster')
     spark_app_main_class= workflow_properties.get('spark_app_main_class')
-    spark_app_config_file= workflow_properties.get('spark_app_config_file')
+    spark_app_config_bucket= workflow_properties.get('spark_app_config_bucket')
     dataproc_serverless_runtime_version= workflow_properties.get('dataproc_serverless_runtime_version')
     spark_app_properties= workflow_properties.get('spark_app_properties')
     spark_history_server_cluster_path = f"projects/{dataproc_serverless_project_id}/regions/{dataproc_serverless_region}/clusters/{spark_history_server_cluster}"
@@ -109,7 +109,7 @@ def create_batch_job(workflow_name, job_name, query_variables, workflow_properti
             "jar_file_uris": [ jar_file_location ],
             "main_class": spark_app_main_class,
             "args": [
-                spark_app_config_file
+                spark_app_config_bucket + "/" + workflow_name + "/" + job_name + ".json"
             ]
         },
         "runtime_config": {
