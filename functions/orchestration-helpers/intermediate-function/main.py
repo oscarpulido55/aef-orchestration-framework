@@ -145,7 +145,9 @@ def call_custom_function(request_json, async_job_id):
     """
     workflow_name = request_json['workflow_name']
     job_name = request_json['job_name']
-    workflow_properties = request_json['workflow_properties']
+    workflow_properties = request_json.get('workflow_properties')
+    step_properties = request_json.get('step_properties')
+    workflow_properties = join_properties(workflow_properties, step_properties)
     params = {
         "workflow_properties": workflow_properties,
         "workflow_name": workflow_name,
@@ -187,3 +189,31 @@ def call_custom_function(request_json, async_job_id):
     except (urllib.error.HTTPError)  as e:
         print('Exception: ' + repr(e))
         raise Exception("unexpected HTTP error in custom function: " + target_function_url.split('/')[-1] + ":" + repr(e))
+
+
+def join_properties(workflow_properties, step_properties):
+    """
+    receives 2 dictionaries if exists, and join step properties into workflow properties, overriding props if necesary.
+
+    Args:
+        workflow_properties: properties passed in firestore to the workflow
+        step_properties: properties configured in each step in functional json workflow definition.
+                         can overwrite workflow properties
+
+    Returns:
+        final properties dictionary
+    """
+    if workflow_properties and not step_properties:
+        return workflow_properties
+    elif step_properties and not workflow_properties:
+        return step_properties
+    else: #workflow and step properties exists
+        if isinstance(workflow_properties, str):
+            workflow_properties = json.loads(workflow_properties)
+        if isinstance(step_properties, str):
+            step_properties = json.loads(step_properties)
+        for key in step_properties:
+            if key in workflow_properties:
+                workflow_properties[key] = step_properties[key]
+        return workflow_properties
+
