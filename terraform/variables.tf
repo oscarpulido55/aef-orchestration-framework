@@ -20,12 +20,6 @@ variable "project" {
   nullable    = false
 }
 
-variable "project_number" {
-  description = "Project number where the AEF Orchestration Framework will be deployed."
-  type        = string
-  nullable    = false
-}
-
 variable "region" {
   description = "Name of the region for the components to be deployed"
   type        = string

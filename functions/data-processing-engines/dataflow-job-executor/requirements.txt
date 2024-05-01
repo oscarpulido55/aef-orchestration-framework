@@ -1,0 +1,8 @@
+functions-framework==3.*
+google-auth
+google-cloud-bigquery
+grpcio
+grpcio-tools
+google-api-python-client
+google-cloud-dataform
+google-cloud-resource-manager

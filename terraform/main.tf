@@ -61,6 +61,11 @@ module "intermediate-function" {
   }
 }
 
+#project reference to get project number
+data "google_project" "project" {
+  project_id = var.project
+}
+
 module "scheduling-function" {
   source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
   project_id  = var.project
@@ -80,7 +85,7 @@ module "scheduling-function" {
   environment_variables = {
     WORKFLOW_SCHEDULING_FIRESTORE_COLLECTION = var.workflows_scheduling_table_name
     WORKFLOW_SCHEDULING_PROJECT_ID = var.project
-    WORKFLOW_SCHEDULING_PROJECT_NUMBER = var.project_number
+    WORKFLOW_SCHEDULING_PROJECT_NUMBER = data.google_project.project.number
     WORKFLOW_SCHEDULING_PROJECT_REGION = var.region
     PIPELINE_EXECUTION_FUNCTION_NAME = module.pipeline-executor-function.function_name
   }
