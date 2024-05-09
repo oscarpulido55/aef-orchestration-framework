@@ -18,14 +18,14 @@ module "pipeline-executor-function" {
   source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
   project_id  = var.project
   region      = var.region
-  name        = "orch-framework-pipeline-executor-function"
+  name        = "orch-framework-pipeline-executor"
   bucket_name = "${var.project}-pipeline-executor-function-bucket"
   bucket_config = {
     force_destroy = true
   }
   bundle_config = {
-    source_dir  = "../functions/orchestration-helpers/pipeline-executor-function"
-    output_path = "bundle-orch-framework-pipeline-executor-function.zip"
+    source_dir  = "../functions/orchestration-helpers/pipeline-executor"
+    output_path = "bundle-orch-framework-pipeline-executor.zip"
   }
   function_config = {
     runtime = "python39"
@@ -42,14 +42,14 @@ module "intermediate-function" {
   source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
   project_id  = var.project
   region      = var.region
-  name        = "orch-framework-intermediate-function"
+  name        = "orch-framework-intermediate"
   bucket_name = "${var.project}-intermediate-function-bucket"
   bucket_config = {
     force_destroy = true
   }
   bundle_config = {
-    source_dir  = "../functions/orchestration-helpers/intermediate-function"
-    output_path = "bundle-orch-framework-intermediate-function.zip"
+    source_dir  = "../functions/orchestration-helpers/intermediate"
+    output_path = "bundle-orch-framework-intermediate.zip"
   }
   function_config = {
     runtime = "python39"
@@ -70,14 +70,14 @@ module "scheduling-function" {
   source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
   project_id  = var.project
   region      = var.region
-  name        = "orch-framework-scheduling-function"
+  name        = "orch-framework-scheduling"
   bucket_name = "${var.project}-scheduling-function-bucket"
   bucket_config = {
     force_destroy = true
   }
   bundle_config = {
-    source_dir  = "../functions/orchestration-helpers/scheduling-function"
-    output_path = "bundle-orch-framework-scheduling-function.zip"
+    source_dir  = "../functions/orchestration-helpers/scheduling"
+    output_path = "bundle-orch-framework-scheduling.zip"
   }
   function_config = {
     runtime = "python39"
