@@ -204,7 +204,14 @@ def join_properties(workflow_properties, step_properties):
     Returns:
         final properties dictionary
     """
-    workflow_props = json.loads(workflow_properties) if isinstance(workflow_properties, str) else workflow_properties
-    step_props = json.loads(step_properties) if isinstance(step_properties, str) else step_properties
+
+    # Handle None or empty inputs
+    workflow_props = {}
+    if workflow_properties:
+        workflow_props = json.loads(workflow_properties) if isinstance(workflow_properties, str) else workflow_properties
+
+    step_props = {}
+    if step_properties:
+        step_props = json.loads(step_properties) if isinstance(step_properties, str) else step_properties
 
     return {**workflow_props, **step_props}
