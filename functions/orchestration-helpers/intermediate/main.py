@@ -154,8 +154,8 @@ def call_custom_function(request_json, async_job_id):
         "workflow_name": workflow_name,
         "job_name": job_name,
         "query_variables": {
-            "${dataform.projectConfig.vars.start_date}": "'" + request_json['query_variables']['start_date'] + "'",
-            "${dataform.projectConfig.vars.end_date}": "'" + request_json['query_variables']['end_date'] + "'"
+            "start_date": "'" + request_json['query_variables']['start_date'] + "'",
+            "end_date": "'" + request_json['query_variables']['end_date'] + "'"
         }
     }
 

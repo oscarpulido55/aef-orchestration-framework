@@ -1,3 +1,17 @@
+module "aef-processing-functino-sa" {
+  source     = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/iam-service-account"
+  project_id = var.project
+  name       = "aef-processing-functino-sa"
+
+  # non-authoritative roles granted *to* the service accounts on other resources
+  iam_project_roles = {
+    "${var.project}" = [
+      "roles/editor",
+      "roles/secretmanager.secretAccessor"
+    ]
+  }
+}
+
 module "bq-saved-query-executor" {
   source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
   project_id  = var.project
@@ -14,6 +28,7 @@ module "bq-saved-query-executor" {
   function_config = {
     runtime = "python39"
   }
+  service_account = module.aef-processing-functino-sa.email
 }
 
 module "dataform-tag-executor" {
@@ -32,6 +47,7 @@ module "dataform-tag-executor" {
   function_config = {
     runtime = "python39"
   }
+  service_account = module.aef-processing-functino-sa.email
 }
 
 module "dataproc-serverless-app-executor" {
@@ -50,4 +66,5 @@ module "dataproc-serverless-app-executor" {
   function_config = {
     runtime = "python39"
   }
+  service_account = module.aef-processing-functino-sa.email
 }

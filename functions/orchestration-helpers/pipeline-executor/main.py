@@ -24,7 +24,6 @@ from google.cloud import workflows_v1
 from google.cloud.workflows import executions_v1
 from google.cloud.workflows.executions_v1.types.executions import Execution
 
-
 # Access environment variables
 WORKFLOW_CONTROL_PROJECT_ID = os.environ.get('WORKFLOW_CONTROL_PROJECT_ID')
 WORKFLOW_CONTROL_DATASET_ID = os.environ.get('WORKFLOW_CONTROL_DATASET_ID')
@@ -32,17 +31,18 @@ WORKFLOW_CONTROL_TABLE_ID = os.environ.get('WORKFLOW_CONTROL_TABLE_ID')
 WORKFLOWS_LOCATION = os.environ.get('WORKFLOWS_LOCATION')
 DEFAULT_TIME_FORMAT = '%Y-%m-%d'
 
-#Logs
+# Logs
 error_client = error_reporting.Client()
 client = google.cloud.logging.Client()
 client.setup_logging()
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-#clients
+# clients
 bq_client = bigquery.Client(project=WORKFLOW_CONTROL_PROJECT_ID)
 execution_client = executions_v1.ExecutionsClient()
 workflows_client = workflows_v1.WorkflowsClient()
+
 
 @functions_framework.http
 def main(request):
@@ -66,11 +66,11 @@ def main(request):
     workflow_properties = event.get('workflow_properties')
     execution_id = 0
     try:
-        if workflow_status == "ENABLED" :
-           execution_id = call_workflows(workflows_name, start_date, end_date,
-                                   validation_date_pattern, workflow_properties,
-                                   same_day_execution)
-           log_step_bigquery(execution_id, event)
+        if workflow_status == "ENABLED":
+            execution_id = call_workflows(workflows_name, start_date, end_date,
+                                          validation_date_pattern, workflow_properties,
+                                          same_day_execution)
+            log_step_bigquery(execution_id, event)
         else:
             print('Workflow Disabled')
         return execution_id
@@ -109,20 +109,20 @@ def call_workflows(workflows_name, start_date, end_date,
     if isinstance(workflow_properties, str):
         workflow_properties = json.loads(workflow_properties)
     arguments = {
-           "workflow_name": workflows_name,
-           "query_variables": {
-               "start_date": start_date,
-               "end_date": end_date,
-           },
-           "workflow_properties": workflow_properties
+        "workflow_name": workflows_name,
+        "query_variables": {
+            "start_date": start_date,
+            "end_date": end_date,
+        },
+        "workflow_properties": workflow_properties
     }
-    print('input params: %s ', arguments)
+    print('Cloud Workflows input params: %s ', arguments)
     execution = Execution(argument=json.dumps(arguments))
     # Construct the fully qualified location path.
     parent = workflows_client.workflow_path(WORKFLOW_CONTROL_PROJECT_ID, WORKFLOWS_LOCATION, workflows_name)
 
     # Execute the workflow.
-    response = execution_client.create_execution(parent=parent,execution=execution)
+    response = execution_client.create_execution(parent=parent, execution=execution)
     execution_id = response.name.split("/")[-1]
     print(f"Created execution: {execution_id}")
     return execution_id
@@ -164,7 +164,7 @@ def process_dates(validation_date_pattern, same_day_execution):
     return start_date, end_date
 
 
-#TODO complete log step
+# TODO complete log step
 def log_step_bigquery(execution_id, event):
     """
     Logs a new entry in workflows bigquery table
@@ -195,6 +195,3 @@ def log_step_bigquery(execution_id, event):
         print("New row has been added.")
     else:
         raise Exception("Encountered errors while inserting row: {}".format(errors))
-
-
-

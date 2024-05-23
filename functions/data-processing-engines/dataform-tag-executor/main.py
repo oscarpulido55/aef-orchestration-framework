@@ -14,9 +14,9 @@
 import google.auth
 import logging
 import functions_framework
-import os
 from google.cloud import dataform_v1beta1
-
+from google.cloud import secretmanager_v1
+import requests
 
 # --- Dataform Client ---
 df_client = dataform_v1beta1.DataformClient()
@@ -76,7 +76,7 @@ def run_repo_or_get_status(job_id: str, gcp_project: str, location: str, repo_na
     if job_id:
         return get_workflow_state(job_id)
     else:
-        return run_workflow(gcp_project, location, repo_name, tags, True, branch)
+        return run_workflow(gcp_project, location, repo_name, tags, True, branch, query_variables)
 
 
 def execute_workflow(repo_uri: str, compilation_result: str, tags: list):
@@ -105,24 +105,92 @@ def execute_workflow(repo_uri: str, compilation_result: str, tags: list):
     return name
 
 
-def compile_workflow(repo_uri: str, branch: str):
-    """Compiles a Dataform workflow using a specified Git branch.
+def access_secret_version(project_id: str, secret_id: str, version_id: str = "1") -> str:
+    """
+    Accesses the value of the specified Secret Version.
+    """
+
+    client = secretmanager_v1.SecretManagerServiceClient()
+    name = f"projects/{project_id}/secrets/{secret_id}/versions/{version_id}"
+    response = client.access_secret_version(request={"name": name})
+    return response.payload.data.decode("UTF-8")
+
+
+def get_dataform_json_from_github(repo_url, github_token, branch="main", path="dataform.json"):
+    """Fetches dataform.json from a GitHub repository."""
+    url = f"{repo_url}/raw/{branch}/{path}"
+    headers = {"Authorization": f"token {github_token}"}
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    return response.json()
+
+
+def merge_compilation_config(
+        compilation_config: dataform_v1beta1.types.CodeCompilationConfig,
+        query_variables: dict,
+        dataform_json_content: dict
+):
+    """Merges Dataform repository default compilation settings with input query variables.
+
+    This function reads the `dataform.json` file from the Dataform repository,
+    merges its contents with the provided `query_variables`, and updates the
+    given `compilation_config` with the merged result.
+
+    Variables defined in `query_variables` will take precedence over variables
+    defined in `dataform.json`. Variables present in `dataform.json` but not
+    in `query_variables` will be retained in the merged configuration.
 
     Args:
-        repo_uri (str): The URI of the Dataform repository.
-        gcp_project (str): The GCP project ID.
-        tag (str): The dataform tag to compile.
-        branch (str): The Git branch to compile.
+        compilation_config: The
+            google.cloud.dataform_v1beta1.types.CodeCompilationConfig object
+            to update with the merged configuration.
+        query_variables: A dictionary containing query variables and their values.
+        dataform_json_content: A dictionary containing the content of dataform.json.
+
+    Returns:
+        None. The `compilation_config` object is updated in-place.
+    """
+
+    # Get the 'vars' section from dataform.json
+    dataform_vars = dataform_json_content.get("vars", {})
+
+    # Merge query_variables with dataform_vars, with query_variables taking precedence
+    merged_vars = {**dataform_vars, **query_variables}
+
+    # Update the vars field in the compilation_config
+    compilation_config.vars.update(merged_vars)
+
+
+def compile_workflow(gcp_project: str, repo_name: str, repo_uri: str, branch: str, query_variables: dict):
+    """Compiles a Dataform workflow using a specified Git branch.
 
     Returns:
         str: The name of the created compilation result.
     """
+
+    github_token = access_secret_version(gcp_project, repo_name + "_secret")
+
+    dataform_json_content = get_dataform_json_from_github(
+        df_client
+            .get_repository(name=repo_uri)
+            .git_remote_settings.url
+            .replace(".git", ""),
+        github_token)
+
+    compilation_result = dataform_v1beta1.CompilationResult(
+        git_commitish=branch,
+    )
+
+    merge_compilation_config(compilation_result.code_compilation_config, query_variables, dataform_json_content)
+
+    print("compilation_result.code_compilation_config.vars::::::   " + str(
+        compilation_result.code_compilation_config.vars))
+
     request = dataform_v1beta1.CreateCompilationResultRequest(
         parent=repo_uri,
-        compilation_result=dataform_v1beta1.types.CompilationResult(
-            git_commitish=branch
-        )
+        compilation_result=compilation_result
     )
+
     response = df_client.create_compilation_result(request=request)
     name = response.name
     logging.info(f'compiled workflow {name}')
@@ -145,7 +213,8 @@ def get_workflow_state(job_id: str):
     return state
 
 
-def run_workflow(gcp_project: str, location: str, repo_name: str, tags: list, execute: str, branch: str):
+def run_workflow(gcp_project: str, location: str, repo_name: str, tags: list, execute: str, branch: str,
+                 query_variables: dict):
     """Orchestrates the complete Dataform workflow process: compilation and execution.
 
     Args:
@@ -154,9 +223,10 @@ def run_workflow(gcp_project: str, location: str, repo_name: str, tags: list, ex
         repo_name (str): The name of the Dataform repository.
         tags (str): The target tags to compile and execute.
         branch (str): The Git branch to use.
+        query_variables (dict): Step specific variables like end or start date i.e. {'${start_date}': "'2024-05-21'", '${end_date}': "'2024-05-21'"}
     """
     repo_uri = f'projects/{gcp_project}/locations/{location}/repositories/{repo_name}'
-    compilation_result = compile_workflow(repo_uri, branch)
+    compilation_result = compile_workflow(gcp_project, repo_name, repo_uri, branch, query_variables)
     if execute:
         workflow_invocation_name = execute_workflow(repo_uri, compilation_result, tags)
         return f"aef-{workflow_invocation_name}"
