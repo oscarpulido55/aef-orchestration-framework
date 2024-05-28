@@ -181,7 +181,7 @@ def call_custom_function(request_json, async_job_id):
             final_response = response.decode("utf-8")
         elif response.decode("utf-8") in ('DONE', 'SUCCESS', 'SUCCEEDED'):
             final_response = "success"
-        elif response.decode("utf-8") in ('PENDING', 'RUNNING'):
+        elif response.decode("utf-8") in ('PENDING', 'RUNNING', 'JOB_STATE_QUEUED'):
             final_response = "running"
         else:  # FAILURE
             final_response = "Exception calling target function " + target_function_url.split('/')[-1] + ":" + response.decode('utf-8')

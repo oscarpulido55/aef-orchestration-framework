@@ -26,7 +26,8 @@ module "bq-saved-query-executor" {
     output_path = "bundle-bq-saved-query-executor.zip"
   }
   function_config = {
-    runtime = "python39"
+    runtime = "python39",
+    instance_count = 200
   }
   service_account = module.aef-processing-functino-sa.email
 }
@@ -45,7 +46,28 @@ module "dataform-tag-executor" {
     output_path = "bundle-dataform-tag-executor.zip"
   }
   function_config = {
-    runtime = "python39"
+    runtime = "python39",
+    instance_count = 200
+  }
+  service_account = module.aef-processing-functino-sa.email
+}
+
+module "dataflow-flextemplate-job-executor" {
+  source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
+  project_id  = var.project
+  region      = var.region
+  name        = "dataflow-flextemplate-job-executor"
+  bucket_name = "${var.project}-dataflow-flextemplate-job-executor"
+  bucket_config = {
+    force_destroy = true
+  }
+  bundle_config = {
+    source_dir  = "../functions/data-processing-engines/dataflow-flextemplate-job-executor"
+    output_path = "bundle-dataflow-flextemplate-job-executor.zip"
+  }
+  function_config = {
+    runtime = "python39",
+    instance_count = 200
   }
   service_account = module.aef-processing-functino-sa.email
 }
@@ -64,7 +86,8 @@ module "dataproc-serverless-app-executor" {
     output_path = "bundle-dataproc-serverless-app-executor.zip"
   }
   function_config = {
-    runtime = "python39"
+    runtime = "python39",
+    instance_count = 200
   }
   service_account = module.aef-processing-functino-sa.email
 }

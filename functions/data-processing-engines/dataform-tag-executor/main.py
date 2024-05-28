@@ -41,8 +41,8 @@ def main(request):
     print("event:" + str(request_json))
 
     try:
-        dataform_location = request_json.get('workflow_properties').get('dataform_location', None)
-        dataform_project_id = request_json.get('workflow_properties').get('dataform_project_id', None)
+        dataform_location = request_json.get('workflow_properties').get('location', None)
+        dataform_project_id = request_json.get('workflow_properties').get('project_id', None)
         repository_name = request_json.get('workflow_properties').get('repository_name', None)
         tags = request_json.get('workflow_properties').get('tags', None)
         branch = request_json.get('workflow_properties').get('branch', None)

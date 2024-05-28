@@ -28,7 +28,8 @@ module "pipeline-executor-function" {
     output_path = "bundle-orch-framework-pipeline-executor.zip"
   }
   function_config = {
-    runtime = "python39"
+    runtime = "python39",
+    instance_count = 200
   }
   environment_variables = {
     WORKFLOW_CONTROL_PROJECT_ID = var.project
@@ -52,7 +53,8 @@ module "intermediate-function" {
     output_path = "bundle-orch-framework-intermediate.zip"
   }
   function_config = {
-    runtime = "python39"
+    runtime = "python39",
+    instance_count = 200
   }
   environment_variables = {
     WORKFLOW_CONTROL_PROJECT_ID = var.project
@@ -80,7 +82,8 @@ module "scheduling-function" {
     output_path = "bundle-orch-framework-scheduling.zip"
   }
   function_config = {
-    runtime = "python39"
+    runtime = "python39",
+    instance_count = 200
   }
   environment_variables = {
     WORKFLOW_SCHEDULING_FIRESTORE_COLLECTION = var.workflows_scheduling_table_name

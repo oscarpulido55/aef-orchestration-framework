@@ -13,8 +13,7 @@
 # limitations under the License.
 
 
-import sys, argparse, logging
-import json
+import argparse, logging
 
 from google.cloud import firestore
 
