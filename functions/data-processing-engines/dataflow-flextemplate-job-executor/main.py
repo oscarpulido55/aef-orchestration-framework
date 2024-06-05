@@ -17,13 +17,14 @@ from googleapiclient.discovery import build
 import json
 from google.cloud import storage
 import re
+import os
 
 # --- Authentication Setup ---
 credentials, project = google.auth.default()
 # --- Dataflow Client ---
 service = build('dataflow', 'v1b3', credentials=credentials)
 storage_client = storage.Client()
-
+function_name = os.environ.get('K_SERVICE')
 
 # df_client = dataflow.FlexTemplatesServiceClient()
 
@@ -61,15 +62,17 @@ def main(request):
         dataflow_location = request_json.get('workflow_properties').get('location', None)
         dataflow_project_id = request_json.get('workflow_properties').get('project_id', None)
 
-        job_name = re.sub(r"^\d+", "", re.sub(r"[^a-z0-9+]", "", request_json.get("job_name", "")))
-        job_name = re.sub(r"^\d+", "", job_name)
+        job_name = request_json.get("job_name", "")
+        dataflow_job_name = re.sub(r"^\d+", "", re.sub(r"[^a-z0-9+]", "", request_json.get("job_name", "")))
+        dataflow_job_name = re.sub(r"^\d+", "", dataflow_job_name)
 
         job_id = request_json.get('job_id', None)
         workflow_name = request_json.get('workflow_name', None)
 
         status_or_job_id = run_dataflow_job_or_get_status(job_id, gcp_project=dataflow_project_id,
                                                           location=dataflow_location,
-                                                          dataflow_job_name=job_name,
+                                                          dataflow_job_name=dataflow_job_name,
+                                                          job_name=job_name,
                                                           request_json=request_json)
 
         if status_or_job_id.startswith('aef_'):
@@ -87,15 +90,17 @@ def main(request):
         return response
 
 
-def extract_dataflow_params(json_file_path, encoding='utf-8'):
+def extract_dataflow_params(bucket_name, job_name, function_name, encoding='utf-8'):
     """Extracts Dataflow parameters from a JSON file.
 
     Args:
-        json_file_path: Path to the JSON file containing the parameters.
+        bucket_name: Bucket containing the JSON parameters file .
 
     Returns:
         A dictionary containing the extracted Dataflow parameters.
     """
+
+    json_file_path = f'gs://{bucket_name}/{function_name}/{job_name}.json'
 
     parts = json_file_path.replace("gs://", "").split("/")
     bucket_name = parts[0]
@@ -103,28 +108,27 @@ def extract_dataflow_params(json_file_path, encoding='utf-8'):
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(object_name)
 
-    try:
-        json_data = blob.download_as_bytes()
-        params = json.loads(json_data.decode(encoding))
-        return params
-    except (google.cloud.exceptions.NotFound, json.JSONDecodeError, UnicodeDecodeError) as e:
-        print(f"Error reading JSON file: {e}")
-        return None
+    json_data = blob.download_as_bytes()
+    params = json.loads(json_data.decode(encoding))
+    return params
+
 
 def run_dataflow_job_or_get_status(job_id: str, gcp_project: str, location: str,
-                                   dataflow_job_name: str, request_json):
+                                   dataflow_job_name: str, job_name:str, request_json):
 
     request_json = request_json
     if job_id:
         return get_dataflow_state(job_id, gcp_project, location)
     else:
-        return run_dataflow_job(gcp_project, location, dataflow_job_name, request_json)
+        return run_dataflow_job(gcp_project, location, dataflow_job_name, job_name, request_json)
 
 
-def run_dataflow_job(gcp_project, location, dataflow_job_name, request_json):
+def run_dataflow_job(gcp_project, location, dataflow_job_name, job_name, request_json):
 
     extracted_params = extract_dataflow_params(
-        request_json.get("workflow_properties").get("dataflow_job_params")
+        bucket_name=request_json.get("workflow_properties").get("jobs_definitions_bucket"),
+        job_name=job_name,
+        function_name=function_name
     )
 
     dataflow_template_name = extracted_params.get("dataflow_template_name")

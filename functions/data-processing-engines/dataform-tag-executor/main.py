@@ -16,13 +16,18 @@ import logging
 import functions_framework
 from google.cloud import dataform_v1beta1
 from google.cloud import secretmanager_v1
+from google.cloud import storage
 import requests
+import json
+import os
 
 # --- Dataform Client ---
 df_client = dataform_v1beta1.DataformClient()
 # --- Authentication Setup ---
 credentials, project = google.auth.default()
-
+# --- GCS Client ---
+storage_client = storage.Client()
+function_name = os.environ.get('K_SERVICE')
 
 @functions_framework.http
 def main(request):
@@ -43,12 +48,25 @@ def main(request):
     try:
         dataform_location = request_json.get('workflow_properties').get('location', None)
         dataform_project_id = request_json.get('workflow_properties').get('project_id', None)
-        repository_name = request_json.get('workflow_properties').get('repository_name', None)
-        tags = request_json.get('workflow_properties').get('tags', None)
-        branch = request_json.get('workflow_properties').get('branch', None)
-
-        workflow_name = request_json.get('workflow_name', None)
         job_name = request_json.get('job_name', None)
+        workflow_name = request_json.get('workflow_name', None)
+
+        jobs_definitions_bucket = request_json.get("workflow_properties", {}).get("jobs_definitions_bucket")
+        repository_name = None
+        tags = None
+        branch = None
+
+        if jobs_definitions_bucket:
+            extracted_params = extract_dataform_params(
+                bucket_name=jobs_definitions_bucket,
+                job_name=job_name,
+                function_name=function_name
+            )
+
+            repository_name = extracted_params.get("repository_name")
+            tags = extracted_params.get("tags")
+            branch = extracted_params.get("branch")
+
         job_id = request_json.get('job_id', None)
         query_variables = request_json.get('query_variables', None)
 
@@ -69,6 +87,32 @@ def main(request):
             "message": repr(err_message)
         }
         return response
+
+def extract_dataform_params(bucket_name, job_name, function_name, encoding='utf-8'):
+    """Extracts Dataflow parameters from a JSON file.
+
+    Args:
+        bucket_name: Bucket containing the JSON parameters file .
+
+    Returns:
+        A dictionary containing the extracted Dataflow parameters.
+    """
+
+    json_file_path = f'gs://{bucket_name}/{function_name}/{job_name}.json'
+
+    parts = json_file_path.replace("gs://", "").split("/")
+    bucket_name = parts[0]
+    object_name = "/".join(parts[1:])
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(object_name)
+
+    try:
+        json_data = blob.download_as_bytes()
+        params = json.loads(json_data.decode(encoding))
+        return params
+    except (google.cloud.exceptions.NotFound, json.JSONDecodeError, UnicodeDecodeError) as e:
+        print(f"Error reading JSON file: {e}")
+        return None
 
 
 def run_repo_or_get_status(job_id: str, gcp_project: str, location: str, repo_name: str, tags: list, branch: str,

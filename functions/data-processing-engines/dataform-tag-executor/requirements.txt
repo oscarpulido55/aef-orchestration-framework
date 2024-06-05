@@ -8,3 +8,4 @@ google-api-python-client
 google-cloud-dataform
 google-cloud-resource-manager
 google-cloud-secret-manager
+google-cloud-storage
