@@ -135,6 +135,8 @@ def run_dataflow_job(gcp_project, location, dataflow_job_name, job_name, request
     dataflow_temp_bucket = extracted_params.get("dataflow_temp_bucket")
     dataflow_job_params = extracted_params.get("dataflow_job_params")
     dataflow_max_workers = extracted_params.get("dataflow_max_workers")
+    network = extracted_params.get("network")
+    subnetwork = extracted_params.get("subnetwork")
     dataflow_template_version = extracted_params.get("dataflow_template_version")
 
     gcs_path = "gs://dataflow-templates-{region}/{version}/flex/{template}".format(region=location,
@@ -146,7 +148,9 @@ def run_dataflow_job(gcp_project, location, dataflow_job_name, job_name, request
             "parameters": dataflow_job_params,
             "containerSpecGcsPath": gcs_path,
             "environment": {"tempLocation": "gs://{bucket}/dataflow/temp".format(bucket=dataflow_temp_bucket),
-                            "maxWorkers": str(dataflow_max_workers)}
+                            "maxWorkers": str(dataflow_max_workers),
+                            "network": str(network),
+                            "subnetwork": str(subnetwork)}
         }
     }
 
