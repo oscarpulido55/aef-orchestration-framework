@@ -1,24 +1,55 @@
 # Analytics Engineering Framework - Orchestration Framework
-[Analytics engineers](https://www.getdbt.com/what-is-analytics-engineering) transform, test, deploy, and document data using software engineering principles, providing clean datasets that empower end users to independently answer their own questions.
+[Analytics engineers](https://www.getdbt.com/what-is-analytics-engineering)  lay the foundation for others to organize, transform, and document data using software engineering principles. Providing easy to use data platforms that empower data practitioners to independently build data pipelines in a standardized and scalable way, and answer their own data-driven questions.
 
-Data orchestration plays a vital role in enabling efficient data access and analysis, making it critical for data lakes and data warehouses.
+Data orchestration plays a vital role in enabling efficient data access and analysis, this repository deployes the core artifacts of a streamlined serverless data orchestration framework using generic executors as Google Cloud Functions. And deployed via Terraform.
 
-This repository provides a streamlined serverless data orchestration framework using Google Cloud Functions. And deployed via Terraform.
+This Orchestration Framework is the core integrator of the Analytics Engineering Framework comprised of:
+1. **(This repository) Orchestration Framework**: Maintained by Analytics Engineers to provide seamless, extensible orchestration and execution infrastructure.
+1. **Data Model**: Directly used by end data practitioners to manage data models, schemas, and Dataplex metadata.
+1. **Data Orchestration**: Directly used by end data practitioners to define and deploy data pipelines using levels, threads, and steps.
+1. **Data Transformation**: Directly used by end data practitioners to define, store, and deploy data transformations.
 
-Simplify your workflow with automated triggering, scheduling, and reusable business logic executors for BigQuery, Dataproc, and more.
+### Concepts
+#### Cloud Workflows Orchestration implementation:
+After deploying data pipelines (levels, threads, and steps) as Cloud Workflows within a GCP project (typically using the data orchestration repository), each workflow step will reference a corresponding Cloud Function. These Cloud Functions must be able to interpret parameter files from the data transformation repository and execute tasks accordingly. The repository already contains execution examples like the Dataform tag executor, the Dataflow flex templates executor and the BigQuery saved Query executor, and you can define new, similar Cloud Functions for additional use cases. Ensure these functions are designed to be extensible and reusable across various jobs.
 
-Automate the deployment of your orchestration logic including retry strategy, generic business logic executors, and more.
+Furthermore, to facilitate operation and debugging, BigQuery tables storing orchestration metadata will be utilized. These tables will serve as a supplementary observability layer, providing insights beyond Cloud Logging and Cloud Monitoring.
+![orchestration_implementation.png](orchestration_implementation.png)
 
+#### Scheduling and execution
+To trigger Workflows, this streamlined execution approach leverages cron-based schedules defined as Cloud Scheduler rules. This allows for the storage and easy manipulation of scheduling definitions outside of the repository. You can change the frequency or execution time independently of the actual data pipeline definition, without requiring any repository commits or CI/CD processes. Simply insert or update a record in a Firestore configuration table. From there, an event-driven mechanism based on Eventarc and Cloud Functions will create or update the Cloud Scheduler accordingly.
+![scheduling_implementation.png](scheduling_implementation.png)
 
-### 1. CI/CD Pipeline Integration
-- Include this repository as a step in your CI/CD pipeline. 
-- The CI/CD pipeline seamlessly compiles and deploys Terraform templates, automating the creation of the data orchestration framework's essential infrastructure.
+### Repository
+This repository defines and deploy the core components for data pipelines orchestration strategy leveraging Cloud Workflows for data pipeline definition and Cloud Functions for serverless execution.
+```
+├── functions
+    ├── data-processing-engines
+    │   ├── bq-saved-query-executor     
+    │   ├── dataflow-flextemplate-job-executor
+    │   ├── dataform-tag-executor
+    │   ├── dataproc-serverless-executor
+    │   └── ... 
+    └── orchestration-helpers
+        ├── intermediate
+        ├── pipeline-executor
+        ├── scheduling
+        └── ...
+```
 
-## Integration with Analytics Engineering Framework
+## Usage
+### Terraform
+1. Define your terraform variables
+<!-- BEGIN TFDTFOC -->
+| name                                         | description                                                                                                                                                                                                                 | type                                               | required | default                                 |
+|-----------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------|----------|-------------------------------------------|
+| [project](variables.tf#L11)                  | Project ID where the AEF Orchestration Framework will be deployed.                                                                                                                                                            | string                                                 | true     | -                                        |
+| [region](variables.tf#L17)                   | Name of the region for the components to be deployed                                                                                                                                                                       | string                                                 | true     | -                                        |
+| [operator_email](variables.tf#L23)           | email of the data platform operator for error notifications                                                                                                                                                                     | string                                                 | true     | -                                        |
+| [workflows_scheduling_table_name](variables.tf#L29) | workflows scheduling table name                                                                                                                                                                                                     | string                                                 | true     | workflows_scheduling                      |
+<!-- END TFDOC -->
 
-This Orchestration Framework is designed as a component of a comprehensive Analytics Engineering Framework comprised of:
-
-1. Analytics Engineering Framework - Data Orchestration: Automates the generation of Google Cloud Workflows Definition files.
-1. Analytics Engineering Framework - Orchestration Framework: Seamlessly deploy your orchestration infrastructure.
-1. Analytics Engineering Framework - Data Transformation: Houses your data transformation logic.
-1. Analytics Engineering Framework - Data Model: Manages data models, schemas and Dataplex lakes and zones.
+2. Run the Terraform Plan / Apply using the variables you defined.
+```bash
+terraform plan -var 'project=<PROJECT>' -var 'region=<REGION>' -var 'operator_email=<EMAIL>'
+```

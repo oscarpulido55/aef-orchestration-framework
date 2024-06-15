@@ -22,8 +22,7 @@ module "bq-saved-query-executor" {
     force_destroy = true
   }
   bundle_config = {
-    source_dir  = "../functions/data-processing-engines/bq-saved-query-executor"
-    output_path = "bundle-bq-saved-query-executor.zip"
+    path  = "../functions/data-processing-engines/bq-saved-query-executor"
   }
   function_config = {
     runtime = "python39",
@@ -42,8 +41,7 @@ module "dataform-tag-executor" {
     force_destroy = true
   }
   bundle_config = {
-    source_dir  = "../functions/data-processing-engines/dataform-tag-executor"
-    output_path = "bundle-dataform-tag-executor.zip"
+    path  = "../functions/data-processing-engines/dataform-tag-executor"
   }
   function_config = {
     runtime = "python39",
@@ -57,13 +55,12 @@ module "dataflow-flextemplate-job-executor" {
   project_id  = var.project
   region      = var.region
   name        = "dataflow-flextemplate-job-executor"
-  bucket_name = "${var.project}-dataflow-flextemplate-job-executor"
+  bucket_name = "${var.project}-dataflow-flextemplate-executor"
   bucket_config = {
     force_destroy = true
   }
   bundle_config = {
-    source_dir  = "../functions/data-processing-engines/dataflow-flextemplate-job-executor"
-    output_path = "bundle-dataflow-flextemplate-job-executor.zip"
+    path  = "../functions/data-processing-engines/dataflow-flextemplate-job-executor"
   }
   function_config = {
     runtime = "python39",
@@ -82,8 +79,7 @@ module "dataproc-serverless-app-executor" {
     force_destroy = true
   }
   bundle_config = {
-    source_dir  = "../functions/data-processing-engines/dataproc-serverless-app-executor"
-    output_path = "bundle-dataproc-serverless-app-executor.zip"
+    path  = "../functions/data-processing-engines/dataproc-serverless-app-executor"
   }
   function_config = {
     runtime = "python39",

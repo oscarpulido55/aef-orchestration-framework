@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-project=pso-amex-data-platform2
+project=analytics-engg-framework-demo
 workflow_name=demo_pipeline
 
 python3 firestore_crud.py --gcp_project $project \

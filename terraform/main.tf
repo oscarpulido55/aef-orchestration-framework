@@ -24,8 +24,7 @@ module "pipeline-executor-function" {
     force_destroy = true
   }
   bundle_config = {
-    source_dir  = "../functions/orchestration-helpers/pipeline-executor"
-    output_path = "bundle-orch-framework-pipeline-executor.zip"
+    path  = "../functions/orchestration-helpers/pipeline-executor"
   }
   function_config = {
     runtime = "python39",
@@ -49,8 +48,7 @@ module "intermediate-function" {
     force_destroy = true
   }
   bundle_config = {
-    source_dir  = "../functions/orchestration-helpers/intermediate"
-    output_path = "bundle-orch-framework-intermediate.zip"
+    path  = "../functions/orchestration-helpers/intermediate"
   }
   function_config = {
     runtime = "python39",
@@ -78,8 +76,7 @@ module "scheduling-function" {
     force_destroy = true
   }
   bundle_config = {
-    source_dir  = "../functions/orchestration-helpers/scheduling"
-    output_path = "bundle-orch-framework-scheduling.zip"
+    path  = "../functions/orchestration-helpers/scheduling"
   }
   function_config = {
     runtime = "python39",
