@@ -11,6 +11,14 @@ This Orchestration Framework is the core integrator of the Analytics Engineering
 
 ### Concepts
 #### Cloud Workflows Orchestration implementation:
+When seeking a cost-effective and fully serverless orchestration solution for your Google Cloud Platform (GCP) data pipelines, Cloud Workflows emerges as a compelling alternative to Airflow/Composer.
+- **Serverless Simplicity**: Eliminate the need to manage servers or GKE clusters at all, completely managed auto scalable serverless service.
+- **No Software Tuning Required**: Avoid the complexities of configuring Airflow or Composer parameters for scaling (make composer scale to support more DAGs) or performance optimization (make Composer scale to support more concurrent tasks). No parameters to care about in Cloud Workflows, deploy and forget.
+- **Zero Code**: Define your workflows using simple YAML files stored directly within Cloud Workflows.
+- **Cost-Efficiency**: Take advantage of 5,000 free steps per month per project, often sufficient for most data platforms, especially with a decentralized approach. Additional steps are billed at a mere $0.01 USD per 1,000 steps. External API calls are priced separately (2,000 free/month, then $0.025 USD per 1,000).
+- **Seamless GCP Integration**: Cloud Workflows seamlessly integrates with other GCP services, making it easy to incorporate tasks like BigQuery queries, Cloud Functions executions, and interactions with various Google Cloud APIs into your pipelines.
+- **External API Connectivity**: Extend your workflow capabilities by effortlessly calling external APIs, enabling integration with third-party services and data sources.
+ 
 After deploying data pipelines (levels, threads, and steps) as Cloud Workflows within a GCP project (typically using the data orchestration repository), each workflow step will reference a corresponding Cloud Function. These Cloud Functions must be able to interpret parameter files from the data transformation repository and execute tasks accordingly. The repository already contains execution examples like the Dataform tag executor, the Dataflow flex templates executor and the BigQuery saved Query executor, and you can define new, similar Cloud Functions for additional use cases. Ensure these functions are designed to be extensible and reusable across various jobs.
 
 Furthermore, to facilitate operation and debugging, BigQuery tables storing orchestration metadata will be utilized. These tables will serve as a supplementary observability layer, providing insights beyond Cloud Logging and Cloud Monitoring.

@@ -33,39 +33,40 @@ The Analytics Engineering Framework comprised of:
    - — 
    - Cloud Scheduler API 
    - Dataflow API
+3. Clone [aef-data-transformation](), [aef-data-model](), [aef-data-orchestration](), [aef-orchestration-framework]()
+4. Replace all the references in the four repositories of sample project ***analytics-engg-framework-demo*** with your projects correspondingly. 
+5. Navigate to each project and deploy terraform resources:
 
-3. Replace all the references of sample project ***analytics-engg-framework-demo*** with your projects correspondingly. 
-3. Navigate to each project and deploy terraform resources.
-- For demo only purposes deploy *sample-data* terraform to create a sample PostgreSQL source database, and upload some sample data files to GCS.
-    ```bash
-    cd aef-data-model/sample-data/terraform/
-    terraform plan -var-file="demo.tfvars"
-    ```
-- Reference some sample Dataform Repositories, so *aef-data-model* can read properties from there to create datasets, add metadata, create BigQuery sample connection, etc. 
+   - For demo only purposes deploy *sample-data* terraform to create a sample PostgreSQL source database, and upload some sample data files to GCS.
+       ```bash
+       cd aef-data-model/sample-data/terraform/
+       terraform plan -var-file="demo.tfvars"
+       ```
+   - Reference some sample Dataform Repositories (already done in sample Terraform vars in repo), so *aef-data-model* can read properties from there to create datasets, add metadata, create BigQuery sample connection, etc. 
 
-- Deploy Dataplex metadata and data model
-    ```bash
-    cd ../../aef-data-model/terraform/
-    terraform plan -var-file="prod.tfvars"
-    ```
-- Deploy core orchestration framework
-    ```bash
-    cd ../../aef-orchestration-framework/terraform/
-    terraform plan -var 'project=<PROJECT>' -var 'region=us-central1' -var 'operator_email=<EMAIL>'
-    ```
-- Deploy sample data pipelines
-    ```bash
-    cd ../../aef-data-orchestration/terraform/
-    terraform plan -var 'project=<PROJECT>' -var 'data_transformation_project=<PROJECT>' -var 'environment=dev' -var 'region=us-central1' -var 'deploy_cloud_workflows=true' 
-    ```
-- Deploy sample data transformation properties definitions (Set DB private IP from DB created in first tep in *sample_jdbc_dataflow_ingestion.json*)
-    ```bash
-    cd ../../aef-data-transformation/terraform/
-    terraform plan -var 'project=<PROJECT>' -var 'region=us-central1' -var 'domain=google' -var 'environment=dev'
-    ```
-- Schedule your demo pipeline execution
-    ```bash
-    cd ../../aef-orchestration-framework/functions/orchestration-helpers/scheduling/utilities/
-    sh setup_evn.sh
-    sh test_create_demo.sh
-    ```
+   - Deploy Dataplex metadata and data model
+       ```bash
+       cd ../../aef-data-model/terraform/
+       terraform plan -var-file="prod.tfvars"
+       ```
+   - Deploy core orchestration framework
+       ```bash
+       cd ../../aef-orchestration-framework/terraform/
+       terraform plan -var 'project=<PROJECT>' -var 'region=us-central1' -var 'operator_email=<EMAIL>'
+       ```
+   - Deploy sample data pipelines
+       ```bash
+       cd ../../aef-data-orchestration/terraform/
+       terraform plan -var 'project=<PROJECT>' -var 'data_transformation_project=<PROJECT>' -var 'environment=dev' -var 'region=us-central1' -var 'deploy_cloud_workflows=true' 
+       ```
+   - Deploy sample data transformation properties definitions (Set DB private IP from DB created in first tep in *sample_jdbc_dataflow_ingestion.json*)
+       ```bash
+       cd ../../aef-data-transformation/terraform/
+       terraform plan -var 'project=<PROJECT>' -var 'region=us-central1' -var 'domain=google' -var 'environment=dev'
+       ```
+6.  Schedule your demo pipeline execution
+       ```bash
+       cd ../../aef-orchestration-framework/functions/orchestration-helpers/scheduling/utilities/
+       sh setup_evn.sh
+       sh test_create_demo.sh
+       ```
