@@ -1,7 +1,7 @@
 # Analytics Engineering Framework - Orchestration Framework
 [Analytics engineers](https://www.getdbt.com/what-is-analytics-engineering)  lay the foundation for others to organize, transform, and document data using software engineering principles. Providing easy to use data platforms that empower data practitioners to independently build data pipelines in a standardized and scalable way, and answer their own data-driven questions.
 
-Data orchestration plays a vital role in enabling efficient data access and analysis, this repository deployes the core artifacts of a streamlined serverless data orchestration framework using generic executors as Google Cloud Functions. And deployed via Terraform.
+Data orchestration plays a vital role in enabling efficient data access and analysis, this repository deploys the core artifacts of a streamlined serverless data orchestration framework using generic executors as Google Cloud Functions. And deployed via Terraform.
 
 This Orchestration Framework is the core integrator of the Analytics Engineering Framework comprised of:
 1. **(This repository) Orchestration Framework**: Maintained by Analytics Engineers to provide seamless, extensible orchestration and execution infrastructure.
