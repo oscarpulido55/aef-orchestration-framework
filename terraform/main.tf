@@ -66,6 +66,26 @@ data "google_project" "project" {
   project_id = var.project
 }
 
+module "aef-scheduling-function-sa" {
+  source     = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/iam-service-account"
+  project_id = var.project
+  name       = "aef-scheduling-function-sa"
+
+  # non-authoritative roles granted *to* the service accounts on other resources
+  iam_project_roles = {
+    "${var.project}" = [
+      "roles/bigquery.admin",
+      "roles/cloudfunctions.admin",
+      "roles/cloudscheduler.admin",
+      "roles/dataform.admin",
+      "roles/logging.admin",
+      "roles/iam.serviceAccountUser",
+      "roles/storage.admin",
+      "roles/workflows.admin"
+    ]
+  }
+}
+
 module "scheduling-function" {
   source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
   project_id  = var.project
@@ -98,6 +118,7 @@ module "scheduling-function" {
       }
     ]
   }
+  service_account = module.aef-scheduling-function-sa.email
 }
 
 

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module "aef-processing-functino-sa" {
+module "aef-processing-function-sa" {
   source     = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/iam-service-account"
   project_id = var.project
   name       = "aef-processing-functino-sa"
@@ -42,7 +42,7 @@ module "bq-saved-query-executor" {
     runtime = "python39",
     instance_count = 200
   }
-  service_account = module.aef-processing-functino-sa.email
+  service_account = module.aef-processing-function-sa.email
 }
 
 module "dataform-tag-executor" {
@@ -61,7 +61,7 @@ module "dataform-tag-executor" {
     runtime = "python39",
     instance_count = 200
   }
-  service_account = module.aef-processing-functino-sa.email
+  service_account = module.aef-processing-function-sa.email
 }
 
 module "dataflow-flextemplate-job-executor" {
@@ -80,7 +80,7 @@ module "dataflow-flextemplate-job-executor" {
     runtime = "python39",
     instance_count = 200
   }
-  service_account = module.aef-processing-functino-sa.email
+  service_account = module.aef-processing-function-sa.email
 }
 
 module "dataproc-serverless-app-executor" {
@@ -99,5 +99,5 @@ module "dataproc-serverless-app-executor" {
     runtime = "python39",
     instance_count = 200
   }
-  service_account = module.aef-processing-functino-sa.email
+  service_account = module.aef-processing-function-sa.email
 }
