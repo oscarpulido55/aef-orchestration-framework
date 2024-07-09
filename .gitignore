@@ -4,6 +4,7 @@ venv/*
 **/myvenv/*
 **/.python-version
 **/.terraform
+**/.firestorevenv
 **/terraform.tfstate*
 **/terraform.tfvars
 **/*.auto.tfvars

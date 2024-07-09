@@ -33,11 +33,72 @@ The Analytics Engineering Framework comprised of:
    - — 
    - Cloud Scheduler API 
    - Dataflow API
-3. Clone [aef-data-transformation](), [aef-data-model](), [aef-data-orchestration](), [aef-orchestration-framework]()
-4. Replace all the references in the four repositories of sample project ***analytics-engg-framework-demo*** with your projects correspondingly. 
-5. Navigate to each project and deploy terraform resources:
+   - Error Reporting API
 
-   - For demo only purposes deploy *sample-data* terraform to create a sample PostgreSQL source database, and upload some sample data files to GCS.
+```shell
+gcloud config set project $1
+gcloud services enable bigquery.googleapis.com \
+                       bigquerydatapolicy.googleapis.com \
+                       bigqueryconnection.googleapis.com \
+                       cloudbuild.googleapis.com \
+                       storage-component.googleapis.com \
+                       cloudresourcemanager.googleapis.com \
+                       dataflow.googleapis.com \
+                       dataform.googleapis.com \
+                       clouderrorreporting.googleapis.com \
+                       compute.googleapis.com \
+                       servicenetworking.googleapis.com \
+                       secretmanager.googleapis.com \
+                       firestore.googleapis.com \
+                       cloudfunctions.googleapis.com \
+                       run.googleapis.com \
+                       eventarc.googleapis.com \
+                       workflows.googleapis.com \
+                       cloudscheduler.googleapis.com \
+                       datacatalog.googleapis.com \
+                       clouderrorreporting.googleapis.com
+```
+
+3. Clone [aef-data-transformation](), [aef-data-model](), [aef-data-orchestration](), [aef-orchestration-framework]()
+5. For demo purposes the demo pipeline runs a Dataform repository, so for that step to work, you need your own Dataform github repository and configure your project names in the Dataform parameters in that repository. Start by making a fork of [this repository](https://github.com/oscarpulido55/aef-sample-dataform-repo.git).
+6. Once you have that repository forked, modify it, so it points to the GCP projects where you will deploy / store your data. Modify ***dataform.json*** and push to our own new fork of the sample Dataform repository.
+```json
+{
+ "defaultSchema": "default_dataset",
+ "assertionSchema": "dataform_assertions",
+ "defaultLocation": "us-central1",
+ "warehouse": "bigquery",
+ "defaultDatabase": "<YOUR_PROJECT>",
+ "vars": {
+   "connection_name": "projects/<YOUR_PROJECT>/locations/us-central1/connections/sample-connection",
+   "dataset_id_landing": "aef_landing_sample_dataset",
+   "dataset_projectid_landing": "<YOUR_PROJECT>",
+   "dataset_location_landing": "us-central1",
+   "dataset_description_landing": "Landing dataset description",
+   "dataset_lake_landing": "aef-sales-lake",
+   "dataset_zone_landing": "aef-landing-sample-zone",
+   "dataset_id_curated": "aef_curated_sample_dataset",
+   "dataset_projectid_curated": "<YOUR_PROJECT>",
+   "dataset_location_curated": "us-central1",
+   "dataset_description_curated": "curated dataset description",
+   "dataset_lake_curated": "aef-sales-lake",
+   "dataset_zone_curated": "aef-curated-sample-zone",
+   "dataset_id_exposure": "aef_exposure_sample_dataset",
+   "dataset_projectid_exposure": "<YOUR_PROJECT>",
+   "dataset_location_exposure": "us-central1",
+   "dataset_description_exposure": "Exposure dataset description",
+   "dataset_lake_exposure": "aef-sales-lake",
+   "dataset_zone_exposure": "aef-exposure-sample-zone",
+   "sample_data_bucket": "<YOUR_PROJECT>-lnd-sample-data-bucket"
+ }
+}
+
+```
+
+7. Replace all the references in the four repositories of sample project ***analytics-engg-framework-demo*** with your projects correspondingly. 
+8. Navigate to each project and deploy terraform resources:
+
+   - For demo only purposes deploy *sample-data* terraform to create a sample PostgreSQL source database, and upload some sample data files to GCS. To be able to run this you should have installed [psql](https://www.postgresql.org/docs/current/app-psql.html)
        ```bash
        cd aef-data-model/sample-data/terraform/
        terraform plan -var-file="demo.tfvars"
@@ -64,7 +125,7 @@ The Analytics Engineering Framework comprised of:
        cd ../../aef-data-transformation/terraform/
        terraform plan -var 'project=<PROJECT>' -var 'region=us-central1' -var 'domain=google' -var 'environment=dev'
        ```
-6.  Schedule your demo pipeline execution
+9. Schedule your demo pipeline execution
        ```bash
        cd ../../aef-orchestration-framework/functions/orchestration-helpers/scheduling/utilities/
        sh setup_evn.sh
