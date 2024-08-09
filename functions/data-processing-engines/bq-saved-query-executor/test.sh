@@ -20,13 +20,13 @@ if [ $# -gt 0 ]; then
 fi
 
 # Project and environment variables
-project=analytics-engg-framework-demo
+project=<PROJECT_ID>
 location=us-central1
 repository_id=test-repo5
 
 # Dataform repository, test query, and JOB information
 dataform_location=us-central1
-dataform_project_id=analytics-engg-framework-demo
+dataform_project_id=<PROJECT_ID>
 commitname=bqfile
 
 definitions_dir=definitions

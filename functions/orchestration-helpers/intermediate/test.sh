@@ -14,7 +14,7 @@
 
 sh ../../data-processing-engines/simple-dataform-query-executor/test.sh false
 
-project=analytics-engg-framework-demo
+project=<PROJECT_ID>
 location=us-central1
 
 job_name=J01_etl_step_1

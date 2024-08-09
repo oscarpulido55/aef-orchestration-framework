@@ -12,19 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from google.cloud import bigquery
-from datetime import datetime
+import re
 import google.auth
 import urllib
 import urllib.error
 import urllib.request
 import json
 import logging
-import google.cloud.logging
 import google.auth.transport.requests
 import functions_framework
 import google.oauth2.id_token
+from google.cloud import bigquery
+from datetime import datetime, timedelta
 from google.cloud import error_reporting
+from enum import Enum
+from urllib import parse
 
 # Access environment variables
 WORKFLOW_CONTROL_PROJECT_ID = os.environ.get('WORKFLOW_CONTROL_PROJECT_ID')
@@ -34,17 +36,21 @@ WORKFLOW_CONTROL_TABLE_ID = os.environ.get('WORKFLOW_CONTROL_TABLE_ID')
 # define clients
 bq_client = bigquery.Client(project=WORKFLOW_CONTROL_PROJECT_ID)
 error_client = error_reporting.Client()
-client = google.cloud.logging.Client()
-client.setup_logging()
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
+
+
+class JobStatus(Enum):
+    SUCCESS = ("DONE", "SUCCESS", "SUCCEEDED", "JOB_STATE_DONE")
+    RUNNING = ("PENDING", "RUNNING", "JOB_STATE_QUEUED", "JOB_STATE_RUNNING", "JOB_STATE_PENDING")
+
 
 @functions_framework.http
 def main(request):
     """
     Main function, likely triggered by an HTTP request from cloud workflows.
-    Acts as an intermediary between workflows and executor functions, taking care of the non
-    functional requirements as process metadata creation , error handling, notifications management,
+    Acts as an intermediary between workflows and executor functions, taking care of the
+    non-functional requirements as process metadata creation , error handling, notifications management,
     checkpoint management, etc.
 
     Args:
@@ -59,31 +65,46 @@ def main(request):
         if request_json and 'call_type' in request_json:
             call_type = request_json['call_type']
         else:
-            return f'no call type!'
-
+            Exception("No call type!")
         if call_type == "get_id":
-            return evaluate_error(call_custom_function(request_json, None))
+            get_id_result = evaluate_error(call_custom_function(request_json, None))
+            status = 'started' if is_valid_step_id(get_id_result) else 'failed_start'
+            log_step_bigquery(request_json, status)
+            return get_id_result
         elif call_type == "get_status":
             if request_json and 'async_job_id' in request_json:
                 status = evaluate_error(call_custom_function(request_json, request_json['async_job_id']))
             else:
-                return f'Job Id not received!'
-            log_step_bigquery(request_json, status)
+                Exception("Job Id not received!")
             return status
         else:
             raise Exception("Invalid call type!")
     except Exception as ex:
         exception_message = "Exception : " + repr(ex)
-        #TODO register error in checkpoint table
+        # TODO register error in checkpoint table
         error_client.report_exception()
         logger.error(exception_message)
         print(RuntimeError(repr(ex)))
         return exception_message, 500
 
 
+def is_valid_step_id(step_id):
+    """Checks if a step ID starts with "aef_" or "aef-".
+
+    Args:
+        step_id: The step ID string to check.
+
+    Returns:
+        True if the step ID is valid, False otherwise.
+    """
+
+    pattern = r"^aef[_-]"  # Use a regular expression for more flexibility
+    return bool(re.match(pattern, step_id))
+
+
 def evaluate_error(message):
     """
-    Evaluates if a message has an error or not
+    Evaluates if a message has an error
 
     Args:
         str: message to evaluate
@@ -91,44 +112,90 @@ def evaluate_error(message):
     Returns:
         raise Exception if the word "exception" found in message
         str: original message coming from executor functions
+        :param message:
     """
     if 'error' in message.lower() or 'exception' in message.lower():
         raise Exception(message)
     return message
 
 
-#TODO Fix log message
 def log_step_bigquery(request_json, status):
     """
-    Logs a new entry in workflows bigquery table
+    Logs a new entry in workflows bigquery table on finished or started step, ether it failed of succeed
 
     Args:
         status: status of the execution
         request_json: event object containing info to log
 
     """
+    target_function_url = request_json['function_url_to_call']
     current_datetime = datetime.now().isoformat()
+    status_to_error_code = {
+        'success': '0',
+        'started': '0',
+        'failed_start': '1',
+        'failed': '2'
+    }
     data = {
         'workflow_execution_id': request_json['execution_id'],
         'workflow_name': request_json['workflow_name'],
         'job_name': request_json['job_name'],
         'job_status': status,
-        'start_date': current_datetime,
-        'end_date': current_datetime,
-        'error_code': '0',
-        'job_params': '',
-        'log_path': '',
-        'retry_count': 0,
-        'execution_time_seconds': 0,
-        'message': ''
+        'timestamp': current_datetime,
+        'error_code': status_to_error_code.get(status, '2'),
+        'job_params': str(request_json),
+        'log_path': get_cloud_logging_url(target_function_url),
+        'retry_count': 0  # TODO
     }
 
     workflows_control_table = bq_client.dataset(WORKFLOW_CONTROL_DATASET_ID).table(WORKFLOW_CONTROL_TABLE_ID)
-    errors = bq_client.insert_rows_json(workflows_control_table, [data])  # Use list for multiple inserts
+    errors = bq_client.insert_rows_json(workflows_control_table, [data])
     if not errors:
         print("New row has been added.")
     else:
         raise Exception("Encountered errors while inserting row: {}".format(errors))
+
+
+def get_cloud_logging_url(target_function_url):
+    """
+    Retrieves the Cloud Logging URL for the most recent execution of a specified Google Cloud Function.
+
+    Args:
+        target_function_url (str): The URL of the target Google Cloud Function.
+
+    Returns:
+        str: The Cloud Logging URL for the most recent execution of the function,
+             or None if no matching log entries are found.
+    """
+    date = datetime.utcnow() - timedelta(minutes=59)
+    function_name = target_function_url.split('/')[-1]
+
+    # Remove newline characters and extra whitespace from the filter string
+    filter_str = f"""
+        (resource.type="cloud_function" AND resource.labels.function_name="{function_name}") 
+        OR 
+        (resource.type="cloud_run_revision" AND resource.labels.function_name="{function_name}") 
+        AND timestamp>="{date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")}" 
+    """
+    filter_str = ' '.join(filter_str.split())  # Remove extra whitespace
+
+    # Then apply the double URL encoding (TODO enhance encoding to get URL link)
+    encoded_filter = parse.quote(parse.quote(filter_str, safe=''), safe='')
+    encoded_filter = (
+        encoded_filter
+        .replace('%253D%2522', '%20%3D%20%22')
+        .replace("%2522%2520", "%22%0A%20")
+        .replace("%2520", "%20")
+        .replace("%2522%2529%20", "%22%2529%0A%20")
+        .replace("%253E%20%3D%20%", "%3E%3D%")
+        .replace("%253A", ":")
+        .replace("Z%2522", "Z%22")
+    )
+    base_url = "https://console.cloud.google.com/logs/query"
+    query_params = f";query={encoded_filter}"
+    log_url = f"{base_url}{query_params}"
+    print("Cloud Logging URL query:", log_url)
+    return log_url
 
 
 def call_custom_function(request_json, async_job_id):
@@ -140,7 +207,7 @@ def call_custom_function(request_json, async_job_id):
         async_job_id: if filled, function ask by the execution status. if not, launches the execution for the first time
 
     Returns:
-        raise Exception if the word "exception" found in message
+        raise Exception if the word "exception" is found in message
         str: original message coming from executor functions
     """
     workflow_name = request_json['workflow_name']
@@ -177,19 +244,23 @@ def call_custom_function(request_json, async_job_id):
         print('response: ' + str(response))
         final_response = ''
         # Handle the response
-        if async_job_id == None and ( response.decode("utf-8").startswith("aef_") or response.decode("utf-8").startswith("aef-") ) :
-            final_response = response.decode("utf-8")
-        elif response.decode("utf-8") in ('DONE', 'SUCCESS', 'SUCCEEDED', 'JOB_STATE_DONE'):
+        decoded_response = response.decode("utf-8")
+        if async_job_id is None and is_valid_step_id(decoded_response):
+            final_response = decoded_response
+        elif decoded_response in JobStatus.SUCCESS.value:
             final_response = "success"
-        elif response.decode("utf-8") in ('PENDING', 'RUNNING', 'JOB_STATE_QUEUED', 'JOB_STATE_RUNNING', 'JOB_STATE_PENDING'):
+            log_step_bigquery(request_json, final_response)
+        elif decoded_response in JobStatus.RUNNING.value:
             final_response = "running"
         else:  # FAILURE
-            final_response = "Exception calling target function " + target_function_url.split('/')[-1] + ":" + response.decode('utf-8')
+            final_response = f"Exception calling target function {target_function_url.split('/')[-1]}:{decoded_response}"
+            log_step_bigquery(request_json, "failed")
         print("final response: " + final_response)
         return final_response
-    except (urllib.error.HTTPError)  as e:
+    except (urllib.error.HTTPError) as e:
         print('Exception: ' + repr(e))
-        raise Exception("unexpected HTTP error in custom function: " + target_function_url.split('/')[-1] + ":" + repr(e))
+        raise Exception(
+            "Unexpected error in custom function: " + target_function_url.split('/')[-1] + ":" + repr(e))
 
 
 def join_properties(workflow_properties, step_properties):
@@ -208,7 +279,8 @@ def join_properties(workflow_properties, step_properties):
     # Handle None or empty inputs
     workflow_props = {}
     if workflow_properties:
-        workflow_props = json.loads(workflow_properties) if isinstance(workflow_properties, str) else workflow_properties
+        workflow_props = json.loads(workflow_properties) if isinstance(workflow_properties,
+                                                                       str) else workflow_properties
 
     step_props = {}
     if step_properties:

@@ -10,8 +10,10 @@ The Analytics Engineering Framework comprised of:
 1. **Data Orchestration**: Directly used by end data practitioners to define and deploy data pipelines using levels, threads, and steps.
 1. **Data Transformation**: Directly used by end data practitioners to define, store, and deploy data transformations.
 
-## Fast deployment for demo or learning purposes 
-1. Establish one or more projects (for testing or simplicity, a single project may suffice) where you will deploy the Analytics Engineering Framework. For production adhere to [best practices for establishing robust data foundations](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/master/blueprints/data-solutions/data-platform-foundations) within these projects.
+## Fast deployment in a single project
+***Note:*** Production deployments imply careful selection of projects where each component will be deployed. For production adhere to [best practices for establishing robust data foundations](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/master/blueprints/data-solutions/data-platform-foundations) within these projects.
+
+1. Establish one or more projects (for testing or simplicity, a single project may suffice) where you will deploy the Analytics Engineering Framework. 
 2. Enable required Google Cloud APIs in your projects.
    - — 
    - BigQuery Connection API 
@@ -34,6 +36,7 @@ The Analytics Engineering Framework comprised of:
    - Cloud Scheduler API 
    - Dataflow API
    - Error Reporting API
+   - Cloud Dataproc API
 
 ```shell
 gcloud config set project $1
@@ -56,6 +59,7 @@ gcloud services enable bigquery.googleapis.com \
                        workflows.googleapis.com \
                        cloudscheduler.googleapis.com \
                        datacatalog.googleapis.com \
+                       dataproc.googleapis.com \
                        clouderrorreporting.googleapis.com
 ```
 
@@ -95,7 +99,7 @@ gcloud services enable bigquery.googleapis.com \
 
 ```
 
-7. Replace all the references in the four repositories of sample project ***analytics-engg-framework-demo*** with your projects correspondingly. 
+7. Replace all the references in the four repositories of sample project ***<PROJECT_ID>*** with your projects correspondingly. 
 8. Navigate to each project and deploy terraform resources:
 
    - For demo only purposes deploy *sample-data* terraform to create a sample PostgreSQL source database, and upload some sample data files to GCS. To be able to run this you should have installed [psql](https://www.postgresql.org/docs/current/app-psql.html)

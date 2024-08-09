@@ -70,7 +70,6 @@ def main(request):
             execution_id = call_workflows(workflows_name, start_date, end_date,
                                           validation_date_pattern, workflow_properties,
                                           same_day_execution)
-            log_step_bigquery(execution_id, event)
         else:
             print('Workflow Disabled')
         return execution_id
@@ -162,36 +161,3 @@ def process_dates(validation_date_pattern, same_day_execution):
         end_date = str(last_month_last_day.strftime(validation_date_pattern))
         start_date = str(last_month_first_day.strftime(validation_date_pattern))
     return start_date, end_date
-
-
-# TODO complete log step
-def log_step_bigquery(execution_id, event):
-    """
-    Logs a new entry in workflows bigquery table
-
-    Args:
-        execution_id: id of the execution
-        event: event object containing info to log
-
-    """
-    current_datetime = datetime.now().isoformat()
-    data = {
-        'workflow_execution_id': execution_id,
-        'workflow_name': event['workflows_name'],
-        'job_name': "START_PIPELINE",
-        'job_status': 'SUCCESS',
-        'start_date': current_datetime,
-        'end_date': current_datetime,
-        'error_code': '0',
-        'job_params': str(event),
-        'log_path': '',
-        'retry_count': 0,
-        'execution_time_seconds': 0,
-        'message': ''
-    }
-    workflows_control_table = bq_client.dataset(WORKFLOW_CONTROL_DATASET_ID).table(WORKFLOW_CONTROL_TABLE_ID)
-    errors = bq_client.insert_rows_json(workflows_control_table, [data])  # Use list for multiple inserts
-    if not errors:
-        print("New row has been added.")
-    else:
-        raise Exception("Encountered errors while inserting row: {}".format(errors))

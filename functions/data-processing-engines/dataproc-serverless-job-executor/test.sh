@@ -27,7 +27,7 @@ spark_app_main_class="com.example.spark.cobol.app.SparkDvTestApp"
 spark_app_config_bucket="gs://test-image-dd-bucket"
 dataproc_serverless_runtime_version="1.1.57"
 
-async_job_id=$(curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-dataproc-serverless-app-executor \
+async_job_id=$(curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-dataproc-serverless-job-executor \
 -H "Authorization: bearer $(gcloud auth print-identity-token)" \
 -H "Content-Type: application/json" \
 -d '{
@@ -54,7 +54,7 @@ echo $async_job_id
 
 sleep 10
 
-curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-dataproc-serverless-app-executor \
+curl -m 70 -X POST https://$location-$project.cloudfunctions.net/orch-framework-dataproc-serverless-job-executor \
 -H "Authorization: bearer $(gcloud auth print-identity-token)" \
 -H "Content-Type: application/json" \
 -d '{

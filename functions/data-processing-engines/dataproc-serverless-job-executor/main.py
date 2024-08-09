@@ -14,18 +14,20 @@
 import google.auth
 import functions_framework
 import requests
-import base64
-import uuid
 import datetime
 import os
 import json
-from google.api_core.exceptions import BadRequest
+from google.cloud import storage
 from google.auth.transport.requests import Request
 
 # --- Authentication Setup ---
 credentials, project = google.auth.default()
 
+function_name = os.environ.get('K_SERVICE')
 BIGQUERY_PROJECT = os.environ.get('BIGQUERY_PROJECT')
+# --- GCS Client ---
+storage_client = storage.Client()
+
 
 @functions_framework.http
 def main(request):
@@ -44,13 +46,23 @@ def main(request):
     print("event:" + str(request_json))
 
     try:
-        workflow_properties= request_json.get('workflow_properties', None)
+        workflow_properties = request_json.get('workflow_properties', None)
         workflow_name = request_json.get('workflow_name')
         job_name = request_json.get('job_name')
         query_variables = request_json.get('query_variables', None)
         job_id = request_json.get('job_id', None)
 
-        status_or_job_id = execute_job_or_get_status(job_id, workflow_name, job_name, query_variables, workflow_properties)
+        jobs_definitions_bucket = request_json.get("workflow_properties", {}).get("jobs_definitions_bucket")
+        extracted_params = {}
+        if jobs_definitions_bucket:
+            extracted_params = extract_params(
+                bucket_name=jobs_definitions_bucket,
+                job_name=job_name,
+                function_name=function_name
+            )
+
+        status_or_job_id = execute_job_or_get_status(job_id, workflow_name, job_name, query_variables,
+                                                     workflow_properties, extracted_params)
 
         if status_or_job_id.startswith('aef-'):
             print(f"Running Job, track it with Job ID: {status_or_job_id}")
@@ -68,14 +80,41 @@ def main(request):
         return response
 
 
-def execute_job_or_get_status(job_id, workflow_name, job_name, query_variables, workflow_properties):
+def execute_job_or_get_status(job_id, workflow_name, job_name, query_variables, workflow_properties, extracted_params):
     if job_id:
-        return get_job_status(job_id, workflow_properties)
+        return get_job_status(job_id, extracted_params)
     else:
-        return create_batch_job(workflow_name, job_name, query_variables, workflow_properties)
+        return create_batch_job(workflow_name, job_name, query_variables, workflow_properties, extracted_params)
 
 
-def create_batch_job(workflow_name, job_name, query_variables, workflow_properties):
+def extract_params(bucket_name, job_name, function_name, encoding='utf-8'):
+    """Extracts parameters from a JSON file.
+
+    Args:
+        bucket_name: Bucket containing the JSON parameters file .
+
+    Returns:
+        A dictionary containing the extracted parameters.
+    """
+
+    json_file_path = f'gs://{bucket_name}/{function_name}/{job_name}.json'
+
+    parts = json_file_path.replace("gs://", "").split("/")
+    bucket_name = parts[0]
+    object_name = "/".join(parts[1:])
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(object_name)
+
+    try:
+        json_data = blob.download_as_bytes()
+        params = json.loads(json_data.decode(encoding))
+        return params
+    except (google.cloud.exceptions.NotFound, json.JSONDecodeError, UnicodeDecodeError) as e:
+        print(f"Error reading JSON file: {e}")
+        return None
+
+
+def create_batch_job(workflow_name, job_name, query_variables, workflow_properties, extracted_params):
     """
     calls a dataproc serverless job.
 
@@ -85,15 +124,15 @@ def create_batch_job(workflow_name, job_name, query_variables, workflow_properti
         str: Id or status of the dataproc serverless batch job
     """
 
-    dataproc_serverless_project_id= workflow_properties.get('dataproc_serverless_project_id')
-    dataproc_serverless_region= workflow_properties.get('dataproc_serverless_region')
-    jar_file_location= workflow_properties.get('jar_file_location')
-    spark_history_server_cluster= workflow_properties.get('spark_history_server_cluster')
-    spark_app_main_class= workflow_properties.get('spark_app_main_class')
-    spark_app_config_bucket= workflow_properties.get('spark_app_config_bucket')
-    dataproc_serverless_runtime_version= workflow_properties.get('dataproc_serverless_runtime_version')
-    spark_app_properties= workflow_properties.get('spark_app_properties')
-    spark_history_server_cluster_path = f"projects/{dataproc_serverless_project_id}/regions/{dataproc_serverless_region}/clusters/{spark_history_server_cluster}"
+    dataproc_serverless_project_id = extracted_params.get('dataproc_serverless_project_id')
+    dataproc_serverless_region = extracted_params.get('dataproc_serverless_region')
+    jar_file_location = extracted_params.get('jar_file_location')
+    spark_history_server_cluster = extracted_params.get('spark_history_server_cluster')
+    spark_app_main_class = extracted_params.get('spark_app_main_class')
+    spark_args = extracted_params.get('spark_args')
+    dataproc_serverless_runtime_version = extracted_params.get('dataproc_serverless_runtime_version')
+    spark_app_properties = extracted_params.get('spark_app_properties')
+    subnetwork = extracted_params.get("subnetwork")
 
     if isinstance(spark_app_properties, str):
         spark_app_properties = json.loads(spark_app_properties)
@@ -104,27 +143,32 @@ def create_batch_job(workflow_name, job_name, query_variables, workflow_properti
     curr_dt = datetime.datetime.now()
     timestamp = int(round(curr_dt.timestamp()))
 
-    params={
+    params = {
         "spark_batch": {
-            "jar_file_uris": [ jar_file_location ],
+            "jar_file_uris": [jar_file_location],
             "main_class": spark_app_main_class,
-            "args": [
-                spark_app_config_bucket + "/" + workflow_name + "/" + job_name + ".json"
-            ]
+            "args": spark_args
         },
         "runtime_config": {
             "version": dataproc_serverless_runtime_version,
             "properties": spark_app_properties
         },
         "environment_config": {
-            "peripherals_config": {
-                "spark_history_server_config": {
-                    "dataproc_cluster": spark_history_server_cluster_path
-                },
-            },
-        },
-
+            "execution_config": {
+                "service_account": credentials.service_account_email,
+                "subnetwork_uri": f"projects/{dataproc_serverless_project_id}/{subnetwork}"
+            }
+        }
     }
+
+    # Check if spark_history_server_cluster is present and not null
+    if spark_history_server_cluster:
+        spark_history_server_cluster_path = f"projects/{dataproc_serverless_project_id}/regions/{dataproc_serverless_region}/clusters/{spark_history_server_cluster}"
+        params["environment_config"]["peripherals_config"] = {
+            "spark_history_server_config": {
+                "dataproc_cluster": spark_history_server_cluster_path
+            },
+        }
 
     print(params)
 
@@ -145,8 +189,7 @@ def create_batch_job(workflow_name, job_name, query_variables, workflow_properti
         raise Exception(error_message)
 
 
-
-def get_job_status(job_id, workflow_properties):
+def get_job_status(job_id, extracted_params):
     """
     gets the status of a dataproc serverless job
 
@@ -156,14 +199,15 @@ def get_job_status(job_id, workflow_properties):
         str: status of the dataproc serverless batch job
     """
 
-    dataproc_serverless_project_id= workflow_properties.get('dataproc_serverless_project_id')
-    dataproc_serverless_region= workflow_properties.get('dataproc_serverless_region')
+    dataproc_serverless_project_id = extracted_params.get('dataproc_serverless_project_id')
+    dataproc_serverless_region = extracted_params.get('dataproc_serverless_region')
 
     credentials.refresh(Request())
     headers = {"Authorization": f"Bearer {credentials.token}"}
 
     url = (f"https://dataproc.googleapis.com/v1/projects/{dataproc_serverless_project_id}/"
            f"locations/{dataproc_serverless_region}/batches/{job_id}")
+    print("Url::::" + url)
 
     response = requests.get(url, headers=headers)
 

@@ -15,13 +15,15 @@
 module "aef-processing-function-sa" {
   source     = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/iam-service-account"
   project_id = var.project
-  name       = "aef-processing-functino-sa"
+  name       = "aef-processing-function-sa"
 
   # non-authoritative roles granted *to* the service accounts on other resources
   iam_project_roles = {
     "${var.project}" = [
       "roles/editor",
-      "roles/secretmanager.secretAccessor"
+      "roles/secretmanager.secretAccessor",
+      "roles/dataproc.worker",
+      "roles/compute.networkUser"
     ]
   }
 }
@@ -83,17 +85,17 @@ module "dataflow-flextemplate-job-executor" {
   service_account = module.aef-processing-function-sa.email
 }
 
-module "dataproc-serverless-app-executor" {
+module "dataproc-serverless-job-executor" {
   source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
   project_id  = var.project
   region      = var.region
-  name        = "dataproc-serverless-app-executor"
-  bucket_name = "${var.project}-dataproc-serverless-app-executor"
+  name        = "dataproc-serverless-job-executor"
+  bucket_name = "${var.project}-dataproc-serverless-job-executor"
   bucket_config = {
     force_destroy = true
   }
   bundle_config = {
-    path  = "../functions/data-processing-engines/dataproc-serverless-app-executor"
+    path  = "../functions/data-processing-engines/dataproc-serverless-job-executor"
   }
   function_config = {
     runtime = "python39",
