@@ -37,6 +37,8 @@ The Analytics Engineering Framework comprised of:
    - Dataflow API
    - Error Reporting API
    - Cloud Dataproc API
+   - Cloud Composer
+   - Cloud Data Lineage
 
 ```shell
 gcloud config set project $1
@@ -60,6 +62,8 @@ gcloud services enable bigquery.googleapis.com \
                        cloudscheduler.googleapis.com \
                        datacatalog.googleapis.com \
                        dataproc.googleapis.com \
+                       composer.googleapis.com \
+                       datalineage.googleapis.com \
                        clouderrorreporting.googleapis.com
 ```
 
@@ -72,44 +76,47 @@ gcloud services enable bigquery.googleapis.com \
  "assertionSchema": "dataform_assertions",
  "defaultLocation": "us-central1",
  "warehouse": "bigquery",
- "defaultDatabase": "<YOUR_PROJECT>",
+ "defaultDatabase": "<PROJECT>",
  "vars": {
-   "connection_name": "projects/<YOUR_PROJECT>/locations/us-central1/connections/sample-connection",
+   "connection_name": "projects/<PROJECT>/locations/us-central1/connections/sample-connection",
    "dataset_id_landing": "aef_landing_sample_dataset",
-   "dataset_projectid_landing": "<YOUR_PROJECT>",
+   "dataset_projectid_landing": "<PROJECT>",
    "dataset_location_landing": "us-central1",
    "dataset_description_landing": "Landing dataset description",
    "dataset_lake_landing": "aef-sales-lake",
    "dataset_zone_landing": "aef-landing-sample-zone",
    "dataset_id_curated": "aef_curated_sample_dataset",
-   "dataset_projectid_curated": "<YOUR_PROJECT>",
+   "dataset_projectid_curated": "<PROJECT>",
    "dataset_location_curated": "us-central1",
    "dataset_description_curated": "curated dataset description",
    "dataset_lake_curated": "aef-sales-lake",
    "dataset_zone_curated": "aef-curated-sample-zone",
    "dataset_id_exposure": "aef_exposure_sample_dataset",
-   "dataset_projectid_exposure": "<YOUR_PROJECT>",
+   "dataset_projectid_exposure": "<PROJECT>",
    "dataset_location_exposure": "us-central1",
    "dataset_description_exposure": "Exposure dataset description",
    "dataset_lake_exposure": "aef-sales-lake",
    "dataset_zone_exposure": "aef-exposure-sample-zone",
-   "sample_data_bucket": "<YOUR_PROJECT>-lnd-sample-data-bucket"
+   "sample_data_bucket": "<PROJECT>-lnd-sample-data-bucket"
  }
 }
 
 ```
 
 7. Replace all the references in the four repositories of sample project ***<PROJECT_ID>*** with your projects correspondingly. 
-8. Navigate to each project and deploy terraform resources:
+8. Replace all the references in the four repositories of the ***<GITHUB_SPACE>*** by the space where you forked sample Dataform repository in steps 3 to 6.
+9. Navigate to each project and deploy terraform resources:
 
-   - For demo only purposes deploy *sample-data* terraform to create a sample PostgreSQL source database, and upload some sample data files to GCS. To be able to run this you should have installed [psql](https://www.postgresql.org/docs/current/app-psql.html)
+   - For demo only purposes deploy **sample-data** terraform to create a sample PostgreSQL source database, and upload some sample data files to GCS. 
+   To be able to run this you should have installed [psql](https://www.postgresql.org/docs/current/app-psql.html)
+   Open **demo.tfvars** and set variables to match your projects, regions, etc. Deploy Dataplex metadata and data model:
        ```bash
        cd aef-data-model/sample-data/terraform/
        terraform plan -var-file="demo.tfvars"
        ```
    - Reference some sample Dataform Repositories (already done in sample Terraform vars in repo), so *aef-data-model* can read properties from there to create datasets, add metadata, create BigQuery sample connection, etc. 
 
-   - Deploy Dataplex metadata and data model
+   - Open **prod.tfvars** and set variables to match your projects, regions, etc. Deploy Dataplex metadata and data model:
        ```bash
        cd ../../aef-data-model/terraform/
        terraform plan -var-file="prod.tfvars"
@@ -119,17 +126,17 @@ gcloud services enable bigquery.googleapis.com \
        cd ../../aef-orchestration-framework/terraform/
        terraform plan -var 'project=<PROJECT>' -var 'region=us-central1' -var 'operator_email=<EMAIL>'
        ```
-   - Deploy sample data pipelines
+   - Open **prod.tfvars** and set variables to match your projects, regions, etc. Deploy data pipelines:
        ```bash
        cd ../../aef-data-orchestration/terraform/
-       terraform plan -var 'project=<PROJECT>' -var 'data_transformation_project=<PROJECT>' -var 'environment=dev' -var 'region=us-central1' -var 'deploy_cloud_workflows=true' 
+       terraform plan -var-file="prod.tfvars"
        ```
    - Deploy sample data transformation properties definitions (Set DB private IP from DB created in first tep in *sample_jdbc_dataflow_ingestion.json*)
        ```bash
        cd ../../aef-data-transformation/terraform/
        terraform plan -var 'project=<PROJECT>' -var 'region=us-central1' -var 'domain=google' -var 'environment=dev'
        ```
-9. Schedule your demo pipeline execution
+10. Schedule your demo pipeline execution
        ```bash
        cd ../../aef-orchestration-framework/functions/orchestration-helpers/scheduling/utilities/
        sh setup_evn.sh

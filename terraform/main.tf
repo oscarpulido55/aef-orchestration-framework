@@ -74,10 +74,8 @@ module "aef-scheduling-function-sa" {
   # non-authoritative roles granted *to* the service accounts on other resources
   iam_project_roles = {
     "${var.project}" = [
-      "roles/bigquery.admin",
       "roles/cloudfunctions.admin",
       "roles/cloudscheduler.admin",
-      "roles/dataform.admin",
       "roles/logging.admin",
       "roles/iam.serviceAccountUser",
       "roles/storage.admin",

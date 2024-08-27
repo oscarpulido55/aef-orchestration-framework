@@ -13,7 +13,7 @@
 # limitations under the License.
 
 project=<PROJECT_ID>
-workflow_name=demo_pipeline
+workflow_name=demo_pipeline_cloud_workflows
 
 python3 firestore_crud.py --gcp_project $project \
                           --workflow_name $workflow_name \

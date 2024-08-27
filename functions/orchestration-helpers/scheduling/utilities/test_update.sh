@@ -14,7 +14,7 @@
 
 project=<PROJECT_ID>
 region=us-central1
-workflow_name=demo_pipeline
+workflow_name=demo_pipeline_cloud_workflows
 
 workflow_properties='{"location":"'$region'","project_id":"'$project'"}'
 

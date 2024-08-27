@@ -46,8 +46,6 @@ def main(request):
     print("event:" + str(request_json))
 
     try:
-        dataform_location = request_json.get('workflow_properties').get('location', None)
-        dataform_project_id = request_json.get('workflow_properties').get('project_id', None)
         job_name = request_json.get('job_name', None)
         workflow_name = request_json.get('workflow_name', None)
 
@@ -55,17 +53,20 @@ def main(request):
         repository_name = None
         tags = None
         branch = None
+        dataform_location = None
+        dataform_project_id = None
 
         if jobs_definitions_bucket:
-            extracted_params = extract_dataform_params(
+            extracted_params = extract_params(
                 bucket_name=jobs_definitions_bucket,
                 job_name=job_name,
                 function_name=function_name
             )
-
             repository_name = extracted_params.get("repository_name")
             tags = extracted_params.get("tags")
             branch = extracted_params.get("branch")
+            dataform_location = extracted_params.get("dataform_location")
+            dataform_project_id = extracted_params.get("dataform_project_id")
 
         job_id = request_json.get('job_id', None)
         query_variables = request_json.get('query_variables', None)
@@ -88,14 +89,14 @@ def main(request):
         }
         return response
 
-def extract_dataform_params(bucket_name, job_name, function_name, encoding='utf-8'):
-    """Extracts Dataflow parameters from a JSON file.
+def extract_params(bucket_name, job_name, function_name, encoding='utf-8'):
+    """Extracts parameters from a JSON file.
 
     Args:
         bucket_name: Bucket containing the JSON parameters file .
 
     Returns:
-        A dictionary containing the extracted Dataflow parameters.
+        A dictionary containing the extracted parameters.
     """
 
     json_file_path = f'gs://{bucket_name}/{function_name}/{job_name}.json'

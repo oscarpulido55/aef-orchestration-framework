@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from google.cloud import bigquery
 import json
 import logging
 import google.cloud.logging

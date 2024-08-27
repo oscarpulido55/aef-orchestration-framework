@@ -59,7 +59,7 @@ def main(request):
     print("event:" + str(request_json))
 
     try:
-        dataflow_location = request_json.get('workflow_properties').get('location', None)
+        dataflow_location = request_json.get('workflow_properties').get('dataflow_location', None)
         dataflow_project_id = request_json.get('workflow_properties').get('project_id', None)
 
         job_name = request_json.get("job_name", "")
@@ -90,14 +90,14 @@ def main(request):
         return response
 
 
-def extract_dataflow_params(bucket_name, job_name, function_name, encoding='utf-8'):
-    """Extracts Dataflow parameters from a JSON file.
+def extract_params(bucket_name, job_name, function_name, encoding='utf-8'):
+    """Extracts parameters from a JSON file.
 
     Args:
         bucket_name: Bucket containing the JSON parameters file .
 
     Returns:
-        A dictionary containing the extracted Dataflow parameters.
+        A dictionary containing the extracted parameters.
     """
 
     json_file_path = f'gs://{bucket_name}/{function_name}/{job_name}.json'
@@ -108,10 +108,13 @@ def extract_dataflow_params(bucket_name, job_name, function_name, encoding='utf-
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(object_name)
 
-    json_data = blob.download_as_bytes()
-    params = json.loads(json_data.decode(encoding))
-    return params
-
+    try:
+        json_data = blob.download_as_bytes()
+        params = json.loads(json_data.decode(encoding))
+        return params
+    except (google.cloud.exceptions.NotFound, json.JSONDecodeError, UnicodeDecodeError) as e:
+        print(f"Error reading JSON file: {e}")
+        return None
 
 def run_dataflow_job_or_get_status(job_id: str, gcp_project: str, location: str,
                                    dataflow_job_name: str, job_name:str, request_json):
@@ -125,7 +128,7 @@ def run_dataflow_job_or_get_status(job_id: str, gcp_project: str, location: str,
 
 def run_dataflow_job(gcp_project, location, dataflow_job_name, job_name, request_json):
 
-    extracted_params = extract_dataflow_params(
+    extracted_params = extract_params(
         bucket_name=request_json.get("workflow_properties").get("jobs_definitions_bucket"),
         job_name=job_name,
         function_name=function_name
