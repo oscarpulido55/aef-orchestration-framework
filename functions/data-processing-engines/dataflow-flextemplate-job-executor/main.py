@@ -26,6 +26,7 @@ service = build('dataflow', 'v1b3', credentials=credentials)
 storage_client = storage.Client()
 function_name = os.environ.get('K_SERVICE')
 
+
 # df_client = dataflow.FlexTemplatesServiceClient()
 
 
@@ -59,8 +60,8 @@ def main(request):
     print("event:" + str(request_json))
 
     try:
-        dataflow_location = request_json.get('workflow_properties').get('dataflow_location', None)
-        dataflow_project_id = request_json.get('workflow_properties').get('project_id', None)
+        location = request_json.get('workflow_properties').get('location', None)
+        project_id = request_json.get('workflow_properties').get('project_id', None)
 
         job_name = request_json.get("job_name", "")
         dataflow_job_name = re.sub(r"^\d+", "", re.sub(r"[^a-z0-9+]", "", request_json.get("job_name", "")))
@@ -69,8 +70,7 @@ def main(request):
         job_id = request_json.get('job_id', None)
         workflow_name = request_json.get('workflow_name', None)
 
-        status_or_job_id = run_dataflow_job_or_get_status(job_id, gcp_project=dataflow_project_id,
-                                                          location=dataflow_location,
+        status_or_job_id = run_dataflow_job_or_get_status(job_id,
                                                           dataflow_job_name=dataflow_job_name,
                                                           job_name=job_name,
                                                           request_json=request_json)
@@ -116,24 +116,24 @@ def extract_params(bucket_name, job_name, function_name, encoding='utf-8'):
         print(f"Error reading JSON file: {e}")
         return None
 
-def run_dataflow_job_or_get_status(job_id: str, gcp_project: str, location: str,
-                                   dataflow_job_name: str, job_name:str, request_json):
 
+def run_dataflow_job_or_get_status(job_id: str, dataflow_job_name: str, job_name: str, request_json):
     request_json = request_json
     if job_id:
-        return get_dataflow_state(job_id, gcp_project, location)
+        return get_dataflow_state(job_id, job_name, request_json)
     else:
-        return run_dataflow_job(gcp_project, location, dataflow_job_name, job_name, request_json)
+        return run_dataflow_job(dataflow_job_name, job_name, request_json)
 
 
-def run_dataflow_job(gcp_project, location, dataflow_job_name, job_name, request_json):
-
+def run_dataflow_job(dataflow_job_name, job_name, request_json):
     extracted_params = extract_params(
         bucket_name=request_json.get("workflow_properties").get("jobs_definitions_bucket"),
         job_name=job_name,
         function_name=function_name
     )
 
+    dataflow_location = extracted_params.get("dataflow_location")
+    dataflow_project = extracted_params.get("project_id")
     dataflow_template_name = extracted_params.get("dataflow_template_name")
     dataflow_temp_bucket = extracted_params.get("dataflow_temp_bucket")
     dataflow_job_params = extracted_params.get("dataflow_job_params")
@@ -142,7 +142,7 @@ def run_dataflow_job(gcp_project, location, dataflow_job_name, job_name, request
     subnetwork = extracted_params.get("subnetwork")
     dataflow_template_version = extracted_params.get("dataflow_template_version")
 
-    gcs_path = "gs://dataflow-templates-{region}/{version}/flex/{template}".format(region=location,
+    gcs_path = "gs://dataflow-templates-{region}/{version}/flex/{template}".format(region=dataflow_location,
                                                                                    version=dataflow_template_version,
                                                                                    template=dataflow_template_name)
     body = {
@@ -158,16 +158,26 @@ def run_dataflow_job(gcp_project, location, dataflow_job_name, job_name, request
     }
 
     request = service.projects().locations().flexTemplates().launch(
-        projectId=gcp_project,
-        location=location,
+        projectId=dataflow_project,
+        location=dataflow_location,
         body=body
     )
     response = request.execute()
-    return "aef_"+response.get("job").get("id")
+    return "aef_" + response.get("job").get("id")
 
 
-def get_dataflow_state(job_id, gcp_project, location):
-    get_job_request = service.projects().locations().jobs().get(location=location,projectId=gcp_project, jobId=re.sub(r"^aef_", "", job_id))
+def get_dataflow_state(job_id, job_name, request_json):
+    extracted_params = extract_params(
+        bucket_name=request_json.get("workflow_properties").get("jobs_definitions_bucket"),
+        job_name=job_name,
+        function_name=function_name
+    )
+
+    dataflow_location = extracted_params.get("dataflow_location")
+    dataflow_project = extracted_params.get("project_id")
+
+    get_job_request = service.projects().locations().jobs().get(location=dataflow_location, projectId=dataflow_project,
+                                                                jobId=re.sub(r"^aef_", "", job_id))
 
     print("Getting status execute ")
     job_status = get_job_request.execute()
