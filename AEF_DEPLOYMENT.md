@@ -140,5 +140,5 @@ gcloud services enable bigquery.googleapis.com \
        ```bash
        cd ../../aef-orchestration-framework/functions/orchestration-helpers/scheduling/utilities/
        sh setup_evn.sh
-       sh test_create_demo.sh
+       sh test_create.sh
        ```
