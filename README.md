@@ -29,7 +29,7 @@ The [engine](https://github.com/oscarpulido55/aef-data-orchestration/blob/e7efd8
 
 The optimal approach depends on your organization's needs and constraints, including the number of domains, data access patterns, and networking configurations.
 
-#### Cloud Workflows Orchestration implementation:
+### Cloud Workflows Orchestration implementation:
 When seeking a cost-effective and fully serverless orchestration solution for your Google Cloud Platform (GCP) data pipelines, Cloud Workflows emerges as a compelling alternative to Airflow/Composer.
 - **Serverless Simplicity**: Eliminate the need to manage servers or GKE clusters at all, completely managed auto scalable serverless service.
 - **No Software Tuning Required**: Avoid the complexities of configuring Airflow or Composer parameters for scaling (make composer scale to support more DAGs) or performance optimization (make Composer scale to support more concurrent tasks). No parameters to care about in Cloud Workflows, deploy and forget.
@@ -43,7 +43,7 @@ After deploying data pipelines (levels, threads, and steps) as Cloud Workflows w
 Furthermore, to facilitate operation and debugging, BigQuery tables storing orchestration metadata will be utilized. These tables will serve as a supplementary observability layer, providing insights beyond Cloud Logging and Cloud Monitoring.
 ![orchestration_implementation.png](orchestration_implementation.png)
 
-#### Scheduling and execution
+### Scheduling and execution
 To trigger Workflows, this streamlined execution approach leverages cron-based schedules defined as Cloud Scheduler rules. This allows for the storage and easy manipulation of scheduling definitions outside of the repository. You can change the frequency or execution time independently of the actual data pipeline definition, without requiring any repository commits or CI/CD processes. Simply insert or update a record in a Firestore configuration table. From there, an event-driven mechanism based on Eventarc and Cloud Functions will create or update the Cloud Scheduler accordingly.
 ![scheduling_implementation.png](scheduling_implementation.png)
 
