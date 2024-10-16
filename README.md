@@ -1,13 +1,18 @@
 # Analytics Engineering Framework - Orchestration Framework
+
+***Note:*** For a comprehensive installation guide of all the AEF repositories together, please look [here](https://github.com/oscarpulido55/aef-orchestration-framework/blob/main/AEF_DEPLOYMENT.md).
+
 [Analytics engineers](https://www.getdbt.com/what-is-analytics-engineering)  lay the foundation for others to organize, transform, and document data using software engineering principles. Providing easy to use data platforms that empower data practitioners to independently build data pipelines in a standardized and scalable way, and answer their own data-driven questions.
 
 Data orchestration plays a vital role in enabling efficient data access and analysis, this repository deploys the core artifacts of a streamlined serverless data orchestration framework using generic executors as Google Cloud Functions. And deployed via Terraform.
 
 This Orchestration Framework is the core integrator of the Analytics Engineering Framework comprised of:
 1. **(This repository) Orchestration Framework**: Maintained by Analytics Engineers to provide seamless, extensible orchestration and execution infrastructure.
-1. **Data Model**: Directly used by end data practitioners to manage data models, schemas, and Dataplex metadata.
-1. **Data Orchestration**: Directly used by end data practitioners to define and deploy data pipelines using levels, threads, and steps.
-1. **Data Transformation**: Directly used by end data practitioners to define, store, and deploy data transformations.
+1. [Data Model](https://github.com/oscarpulido55/aef-data-model): Directly used by end data practitioners to manage data models, schemas, and Dataplex metadata.
+1. [Data Orchestration](https://github.com/oscarpulido55/aef-data-orchestration): Directly used by end data practitioners to define and deploy data pipelines using levels, threads, and steps.
+1. [Data Transformation](https://github.com/oscarpulido55/aef-data-transformation): Directly used by end data practitioners to define, store, and deploy data transformations.
+
+![AEF_repositories_orchestration_framework.png](AEF_repositories_orchestration_framework.png)
 
 ### Concepts
 #### Cloud Workflows Orchestration implementation:

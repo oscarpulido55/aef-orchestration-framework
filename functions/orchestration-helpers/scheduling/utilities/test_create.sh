@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-project=<PROJECT_ID>
+project=analytics-engg-framework-demo
 region=us-central1
 workflow_name=demo_pipeline_cloud_workflows
 

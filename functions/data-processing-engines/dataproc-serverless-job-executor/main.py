@@ -131,6 +131,7 @@ def create_batch_job(workflow_name, job_name, query_variables, workflow_properti
     spark_app_main_class = extracted_params.get('spark_app_main_class')
     spark_args = extracted_params.get('spark_args')
     dataproc_serverless_runtime_version = extracted_params.get('dataproc_serverless_runtime_version')
+    dataproc_service_account = extracted_params.get('dataproc_service_account')
     spark_app_properties = extracted_params.get('spark_app_properties')
     subnetwork = extracted_params.get("subnetwork")
 
@@ -155,7 +156,7 @@ def create_batch_job(workflow_name, job_name, query_variables, workflow_properti
         },
         "environment_config": {
             "execution_config": {
-                "service_account": credentials.service_account_email,
+                "service_account": dataproc_service_account,
                 "subnetwork_uri": f"projects/{dataproc_serverless_project_id}/{subnetwork}"
             }
         }

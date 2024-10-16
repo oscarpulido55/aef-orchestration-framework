@@ -1,14 +1,14 @@
 # Analytics Engineering Framework
 [Analytics engineers](https://www.getdbt.com/what-is-analytics-engineering)  lay the foundation for others to organize, transform, and document data using software engineering principles. Providing easy to use data platforms that empower data practitioners to independently build data pipelines in a standardized and scalable way, and answer their own data-driven questions.
 
+The Analytics Engineering Framework comprised of:
+
 ![aef_high_level.png](aef_high_level.png)
 
-
-The Analytics Engineering Framework comprised of:
-1. **Orchestration Framework**: Maintained by Analytics Engineers to provide seamless, extensible orchestration and execution infrastructure.
-1. **Data Model**: Directly used by end data practitioners to manage data models, schemas, and Dataplex metadata.
-1. **Data Orchestration**: Directly used by end data practitioners to define and deploy data pipelines using levels, threads, and steps.
-1. **Data Transformation**: Directly used by end data practitioners to define, store, and deploy data transformations.
+1. [Orchestration Framework](https://github.com/oscarpulido55/aef-orchestration-framework): Maintained by Analytics Engineers to provide seamless, extensible orchestration and execution infrastructure.
+1. [Data Model](https://github.com/oscarpulido55/aef-data-model): Directly used by end data practitioners to manage data models, schemas, and Dataplex metadata.
+1. [Data Orchestration](https://github.com/oscarpulido55/aef-data-orchestration): Directly used by end data practitioners to define and deploy data pipelines using levels, threads, and steps.
+1. [Data Transformation](https://github.com/oscarpulido55/aef-data-transformation): Directly used by end data practitioners to define, store, and deploy data transformations.
 
 ## Fast deployment in a single project
 ***Note:*** Production deployments imply careful selection of projects where each component will be deployed. For production adhere to [best practices for establishing robust data foundations](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/master/blueprints/data-solutions/data-platform-foundations) within these projects.
@@ -67,9 +67,9 @@ gcloud services enable bigquery.googleapis.com \
                        clouderrorreporting.googleapis.com
 ```
 
-3. Clone [aef-data-transformation](), [aef-data-model](), [aef-data-orchestration](), [aef-orchestration-framework]()
-5. For demo purposes the demo pipeline runs a Dataform repository, so for that step to work, you need your own Dataform github repository and configure your project names in the Dataform parameters in that repository. Start by making a fork of [this repository](https://github.com/oscarpulido55/aef-sample-dataform-repo.git).
-6. Once you have that repository forked, modify it, so it points to the GCP projects where you will deploy / store your data. Modify ***dataform.json*** and push to our own new fork of the sample Dataform repository.
+3. Clone [aef-data-transformation](https://github.com/oscarpulido55/aef-data-transformation), [aef-data-model](https://github.com/oscarpulido55/aef-data-model), [aef-data-orchestration](https://github.com/oscarpulido55/aef-data-orchestration), [aef-orchestration-framework](https://github.com/oscarpulido55/aef-orchestration-framework)
+4. For demo purposes the demo pipeline runs a Dataform repository, so for that step to work, you need your own Dataform github repository and configure your project names in the Dataform parameters in that repository. Start by making a fork of [this repository](https://github.com/oscarpulido55/aef-sample-dataform-repo.git).
+5. Once you have that repository forked, modify it, so it points to the GCP projects where you will deploy / store your data. Modify ***dataform.json*** and push to our own new fork of the sample Dataform repository.
 ```json
 {
  "defaultSchema": "default_dataset",
@@ -103,9 +103,9 @@ gcloud services enable bigquery.googleapis.com \
 
 ```
 
-7. Replace all the references in the four repositories of sample project ***<PROJECT_ID>*** with your projects correspondingly. 
-8. Replace all the references in the four repositories of the ***<GITHUB_SPACE>*** by the space where you forked sample Dataform repository in steps 3 to 6.
-9. Navigate to each project and deploy terraform resources:
+6. Replace all the references in the four repositories of sample project ***<PROJECT_ID>*** with your projects correspondingly. 
+7. Replace all the references in the four repositories of the ***<GITHUB_SPACE>*** by the space where you forked sample Dataform repository in steps 3 to 6.
+8. Navigate to each project and deploy terraform resources:
 
    - For demo only purposes deploy **sample-data** terraform to create a sample PostgreSQL source database, and upload some sample data files to GCS. 
    To be able to run this you should have installed [psql](https://www.postgresql.org/docs/current/app-psql.html)
@@ -136,7 +136,7 @@ gcloud services enable bigquery.googleapis.com \
        cd ../../aef-data-transformation/terraform/
        terraform plan -var 'project=<PROJECT>' -var 'region=us-central1' -var 'domain=google' -var 'environment=dev'
        ```
-10. Schedule your demo pipeline execution
+9. Schedule your demo pipeline execution
        ```bash
        cd ../../aef-orchestration-framework/functions/orchestration-helpers/scheduling/utilities/
        sh setup_evn.sh
