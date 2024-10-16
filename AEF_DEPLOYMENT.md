@@ -69,7 +69,7 @@ gcloud services enable bigquery.googleapis.com \
 
 3. Clone [aef-data-transformation](https://github.com/oscarpulido55/aef-data-transformation), [aef-data-model](https://github.com/oscarpulido55/aef-data-model), [aef-data-orchestration](https://github.com/oscarpulido55/aef-data-orchestration), [aef-orchestration-framework](https://github.com/oscarpulido55/aef-orchestration-framework)
 4. For demo purposes the demo pipeline runs a Dataform repository, so for that step to work, you need your own Dataform github repository and configure your project names in the Dataform parameters in that repository. Start by making a fork of [this repository](https://github.com/oscarpulido55/aef-sample-dataform-repo.git).
-5. Once you have that repository forked, modify it, so it points to the GCP projects where you will deploy / store your data. Modify ***dataform.json*** and push to our own new fork of the sample Dataform repository.
+5. Once you have that repository forked, modify it, so it points to the GCP projects where you will deploy / store your data. Modify ***dataform.json*** and push to your own new fork of the sample Dataform repository.
 ```json
 {
  "defaultSchema": "default_dataset",
