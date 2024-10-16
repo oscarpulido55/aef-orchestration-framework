@@ -66,3 +66,10 @@ This repository defines and deploy the core components for data pipelines orches
 ```bash
 terraform plan -var 'project=<PROJECT>' -var 'region=<REGION>' -var 'operator_email=<EMAIL>'
 ```
+
+### Domain-Based Orchestration V.S Central Orchestration 
+***Domain-Based Orchestration***: Isolating orchestration by domain potentially simplifies IAM and networking management but may lead to increased operational overhead and complexity. This approach is preferred in multi-domain environments with distinct data access and processing needs. This is demonstrated in the [Data Orchestration](https://github.com/oscarpulido55/aef-data-orchestration) repository, where one Composer environment is managed and deployed for each data domain team, with each team owning a copy of the repository.
+
+***Central Orchestration***: Consolidating orchestration into a single project centralizes Data Ops and potentially reduces management complexity. This approach may be simpler to understand and manage, particularly in single-domain environments or those with shared networks. However, it may necessitate IAM adjustments. This is easily managed when using Cloud Workflows, as its serverless nature enables deployment within a single centralized project for all data domain teams.
+
+Both approaches are valid, and the "definitive" guide can be adapted based on specific organizational requirements and constraints. Factors such as the number of domains, data access patterns, and networking configurations should inform the decision. Simplifying the development of complex data pipelines
