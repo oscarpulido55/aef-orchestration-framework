@@ -112,7 +112,7 @@ module "scheduling-function" {
     event_filters = [
       {
         attribute = "database"
-        value="(default)"
+        value="aef-database"
       }
     ]
   }
