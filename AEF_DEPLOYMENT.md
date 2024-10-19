@@ -24,8 +24,9 @@ The Analytics Engineering Framework comprised of:
 Demo deployment takes up to 45 minutes, mostly due to Cloud SQL instance and Cloud Composer environment setup.
 1. Download `demo_deployment` folder containing demo deployment scripts:
    ```bash
-   wget -r -np -nH --cut-dirs=3 -R "index.html*" https://raw.githubusercontent.com/oscarpulido55/aef-orchestration-framework/main/demo_deployment/
+   mkdir demo_deployment
    cd demo_deployment
+   curl -L https://api.github.com/repos/oscarpulido55/aef-orchestration-framework/contents/demo_deployment?ref=main |   grep -E '"download_url":' |   awk '{print $2}' |   sed 's/"//g;s/,//g' |   xargs -n 1 curl -L -O
    ```
 
 2. Set variables :

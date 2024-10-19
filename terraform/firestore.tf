@@ -16,7 +16,7 @@
 
 resource "google_firestore_database" "database" {
   project     = var.project
-  name        = "(default)"
+  name        = "aef_database"
   location_id = var.region
   type        = "FIRESTORE_NATIVE"
 }
