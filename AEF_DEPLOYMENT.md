@@ -53,5 +53,5 @@ Demo deployment takes up to 45 minutes, mostly due to Cloud SQL instance and Clo
 ### Cleanup:
 
 ```bash
-./aef-orchestration-framework/demo_deployment/deploy_aef_repositories.sh "$DATAFORM_REPO_NAME" "$PROJECT_ID" "$LOCAL_WORKING_DIRECTORY" "$GITHUB_USER_NAME" "$AEF_OPERATOR_EMAIL"
+./deploy_aef_repositories.sh "$DATAFORM_REPO_NAME" "$PROJECT_ID" "$LOCAL_WORKING_DIRECTORY" "$GITHUB_USER_NAME" "$AEF_OPERATOR_EMAIL"
 ```

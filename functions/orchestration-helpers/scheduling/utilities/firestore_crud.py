@@ -17,11 +17,12 @@ import argparse, logging
 
 from google.cloud import firestore
 
+DEFAULT_DATABASE_NAME = "aef-database"
 WORKFLOWS_COLLECTION_DEFAULT_NAME = "workflows_scheduling"
 
 def main(args, loglevel):
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
-    db = firestore.Client(project=args.gcp_project)
+    db = firestore.Client(project=args.gcp_project, database=DEFAULT_DATABASE_NAME)
     if hasattr(args, 'workflow_properties'):
         print(args.workflow_properties)
         #workflow_props = json.loads(args.workflow_properties)
