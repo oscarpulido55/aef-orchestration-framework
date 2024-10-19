@@ -17,7 +17,7 @@ import argparse, logging
 
 from google.cloud import firestore
 
-DEFAULT_DATABASE_NAME = "aef-database"
+DEFAULT_DATABASE_NAME = "(default)"
 WORKFLOWS_COLLECTION_DEFAULT_NAME = "workflows_scheduling"
 
 def main(args, loglevel):

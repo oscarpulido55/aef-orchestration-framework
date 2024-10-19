@@ -43,8 +43,15 @@ if [ ! -z "$(ls -A $working_directory)" ]; then
   esac
 fi
 
+gcloud firestore databases list --project=$project_id | grep -q "(default)"
+if [[ $? -eq 0 ]]; then
+  echo "(default) Firestore database exists. Delete it before installing the AEF."
+  exit 1
+fi
+
 #Fork demo [Dataform repository](https://github.com/oscarpulido55/aef-data-orchestration/blob/0c1a69e655e3435b978e6a68640db141e86b2685/workflow-definitions/demo_pipeline_cloud_workflows.json#L42)
-sh set_demo_dataform_repo.sh "$DATAFORM_REPO_NAME" "$PROJECT_ID" "$LOCAL_WORKING_DIRECTORY"
+echo "Forking sample Dataform repository ..."
+sh set_demo_dataform_repo.sh $new_repo_name $project_id $working_directory
 
 cd $working_directory
 if [ ! -f "aef-data-model/sample-data/terraform/tfplansampledata" ]; then

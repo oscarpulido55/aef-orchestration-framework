@@ -68,7 +68,11 @@ gh auth login
 
 # Create a new repository from the template
 rm -rf $new_repo_name
-gh repo create "$new_repo_name" --template "https://github.com/oscarpulido55/aef-sample-dataform-repo" --public
+gh repo create "$new_repo_name" --template "https://github.com/oscarpulido55/aef-sample-dataform-repo" --public | grep "already exists"
+if [[ $? -eq 0 ]]; then
+  exit 1
+fi
+
 echo "New repository '$new_repo_name' created from template 'https://github.com/oscarpulido55/aef-sample-dataform-repo'"
 sleep 3
 gh repo clone "$new_repo_name"

@@ -34,6 +34,7 @@ fi
 cd $working_directory
 if [ -f "aef-orchestration-framework/terraform/tfplanorchframework" ]; then
   echo "Destroying aef-orchestration-framework demo deployment ..."
+  
   cd aef-orchestration-framework/terraform
   terraform destroy -auto-approve -var "project=$project_id" -var "region=us-central1" -var "operator_email=$aef_operator_email" | tee orchfrm_destroy.log
   if grep -qi "error" orchfrm_destroy.log; then
