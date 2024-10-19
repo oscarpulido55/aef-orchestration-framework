@@ -117,6 +117,7 @@ module "scheduling-function" {
     ]
   }
   service_account = module.aef-scheduling-function-sa.email
+  depends_on = [google_firestore_database.database]
 }
 
 
