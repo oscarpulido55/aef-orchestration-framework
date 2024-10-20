@@ -39,15 +39,15 @@ Demo deployment takes up to 45 minutes, mostly due to Cloud SQL instance and Clo
    ```
 3. Enable required APIs:
     ```bash
-    ./enable_aef_apis.sh "$PROJECT_ID"
+    sh enable_aef_apis.sh "$PROJECT_ID"
     ```
 3. Clone and deploy the AEF:
     ```bash
-    ./deploy_aef_repositories.sh "$DATAFORM_REPO_NAME" "$PROJECT_ID" "$LOCAL_WORKING_DIRECTORY" "$GITHUB_USER_NAME" "$AEF_OPERATOR_EMAIL"
+    sh deploy_aef_repositories.sh "$DATAFORM_REPO_NAME" "$PROJECT_ID" "$LOCAL_WORKING_DIRECTORY" "$GITHUB_USER_NAME" "$AEF_OPERATOR_EMAIL"
     ```
 5. Schedule your demo pipeline for execution:
     ```bash
-    ./schedule_demo_pipeline.sh "$LOCAL_WORKING_DIRECTORY" "$PROJECT_ID"
+    sh schedule_demo_pipeline.sh "$LOCAL_WORKING_DIRECTORY" "$PROJECT_ID"
     ```
    
 ### Cleanup:

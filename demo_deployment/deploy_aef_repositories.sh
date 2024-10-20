@@ -51,7 +51,64 @@ fi
 
 #Fork demo [Dataform repository](https://github.com/oscarpulido55/aef-data-orchestration/blob/0c1a69e655e3435b978e6a68640db141e86b2685/workflow-definitions/demo_pipeline_cloud_workflows.json#L42)
 echo "Forking sample Dataform repository ..."
-sh set_demo_dataform_repo.sh $new_repo_name $project_id $working_directory
+cd $working_directory
+# Check if gh is installed
+if ! command -v gh &> /dev/null; then
+  echo "gh is not installed. Installing..."
+
+  # Install gh based on OS
+  if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Linux
+    if command -v apt &> /dev/null; then
+      sudo apt install gh -y
+    elif command -v dnf &> /dev/null; then
+      sudo dnf install gh -y
+    elif command -v pacman &> /dev/null; then
+      sudo pacman -S gh --noconfirm
+    else
+      echo "Unsupported package manager. Please install gh manually."
+      exit 1
+    fi
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    if command -v brew &> /dev/null; then
+      brew install gh
+    else
+      echo "Homebrew is not installed. Please install Homebrew first or install gh manually."
+      exit 1
+    fi
+  elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+    # Windows
+    echo "Please install gh manually from https://cli.github.com/"
+    exit 1
+  else
+    echo "Unsupported OS. Please install gh manually."
+    exit 1
+  fi
+fi
+
+gh auth login
+
+# Create a new repository from the template
+gh repo view "$new_repo_name" &> /dev/null
+if [[ $? -eq 0 ]]; then
+  echo "Repository $new_repo_name exists."
+  exit 1
+fi
+gh repo create $new_repo_name --template "https://github.com/oscarpulido55/aef-sample-dataform-repo" --public
+sleep 3
+gh repo clone "$new_repo_name"
+
+# Replace <PROJECT_ID> with the actual Project ID in dataform.json
+cd $new_repo_name
+escaped_project_id=$(echo "$project_id" | sed 's/-/\\-/g')
+
+sed -i.bak "s/<PROJECT_ID>/$escaped_project_id/g" dataform.json
+
+# Commit the changes
+git add dataform.json
+git commit -m "Update dataform.json with Project ID"
+git push origin main
 
 cd $working_directory
 if [ ! -f "aef-data-model/sample-data/terraform/tfplansampledata" ]; then

@@ -34,7 +34,6 @@ fi
 cd $working_directory
 if [ -f "aef-orchestration-framework/terraform/tfplanorchframework" ]; then
   echo "Destroying aef-orchestration-framework demo deployment ..."
-  
   cd aef-orchestration-framework/terraform
   terraform destroy -auto-approve -var "project=$project_id" -var "region=us-central1" -var "operator_email=$aef_operator_email" | tee orchfrm_destroy.log
   if grep -qi "error" orchfrm_destroy.log; then
@@ -102,6 +101,15 @@ if [ -f "aef-data-model/sample-data/terraform/tfplansampledata" ]; then
   bq rm -r -f -d $project_id:aef_landing_sample_dataset
   bq rm -r -f -d $project_id:aef_curated_sample_dataset
   bq rm -r -f -d $project_id:aef_exposure_sample_dataset
+
+  for ZONE_NAME in $(gcloud dataplex zones list --location=us-central1 --lake=aef-sales-lake --format="value(name)"); do
+    for ASSET_NAME in $(gcloud dataplex assets list --zone=$ZONE_NAME --location=us-central1 --lake=aef-sales-lake --format="value(name)"); do
+      gcloud dataplex assets delete $ASSET_NAME --location=us-central1 --zone=$ZONE_NAME --lake=aef-sales-lake --quiet
+    done
+    gcloud dataplex zones delete $ZONE_NAME --location=us-central1 --lake=aef-sales-lake --quiet
+  done
+  gcloud dataplex lakes delete aef-sales-lake --location=us-central1 --quiet
+  gcloud dataplex lakes delete another-sample-lake --location=us-central1 --quiet
   cd aef-data-model/sample-data/terraform/
   terraform destroy -auto-approve -var-file="demo.tfvars" | tee sampledata_destroy.log
   if grep -qi "error" sampledata_destroy.log; then
@@ -129,7 +137,7 @@ if [ -f "aef-data-model/terraform/tfplandatamodel" ]; then
     exit 1
   fi
 else
-  echo "WARNING!: There is a previous terraform deployment in aef-data-model."
+  echo "WARNING!:  No previous terraform deployment found in aef-data-model."
   read -r -p "Do you want to skip it and continue? [y/N] " response
   case "$response" in
   [yY][eE][sS] | [yY])
