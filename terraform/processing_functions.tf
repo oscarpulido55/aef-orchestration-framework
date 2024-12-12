@@ -13,7 +13,7 @@
 # limitations under the License.
 
 module "aef-processing-function-sa" {
-  source     = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/iam-service-account"
+  source     = "git::https://github.com/GoogleCloudPlatform/cloud-foundation-fabric.git//modules/iam-service-account?depth=1&ref=v36.0.1"
   project_id = var.project
   name       = "aef-processing-function-sa"
 
@@ -29,7 +29,7 @@ module "aef-processing-function-sa" {
 }
 
 module "bq-saved-query-executor" {
-  source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
+  source      = "git::https://github.com/GoogleCloudPlatform/cloud-foundation-fabric.git//modules/cloud-function-v2?depth=1&ref=v36.0.1"
   project_id  = var.project
   region      = var.region
   name        = "bq-saved-query-executor"
@@ -48,7 +48,7 @@ module "bq-saved-query-executor" {
 }
 
 module "dataform-tag-executor" {
-  source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
+  source      = "git::https://github.com/GoogleCloudPlatform/cloud-foundation-fabric.git//modules/cloud-function-v2?depth=1&ref=v36.0.1"
   project_id  = var.project
   region      = var.region
   name        = "dataform-tag-executor"
@@ -67,7 +67,7 @@ module "dataform-tag-executor" {
 }
 
 module "dataflow-flextemplate-job-executor" {
-  source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
+  source      = "git::https://github.com/GoogleCloudPlatform/cloud-foundation-fabric.git//modules/cloud-function-v2?depth=1&ref=v36.0.1"
   project_id  = var.project
   region      = var.region
   name        = "dataflow-flextemplate-job-executor"
@@ -86,7 +86,7 @@ module "dataflow-flextemplate-job-executor" {
 }
 
 module "dataproc-serverless-job-executor" {
-  source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
+  source      = "git::https://github.com/GoogleCloudPlatform/cloud-foundation-fabric.git//modules/cloud-function-v2?depth=1&ref=v36.0.1"
   project_id  = var.project
   region      = var.region
   name        = "dataproc-serverless-job-executor"

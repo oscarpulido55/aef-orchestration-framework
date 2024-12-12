@@ -15,7 +15,7 @@
  */
 
 module "pipeline-executor-function" {
-  source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
+  source      = "git::https://github.com/GoogleCloudPlatform/cloud-foundation-fabric.git//modules/cloud-function-v2?depth=1&ref=v36.0.1"
   project_id  = var.project
   region      = var.region
   name        = "orch-framework-pipeline-executor"
@@ -39,7 +39,7 @@ module "pipeline-executor-function" {
 }
 
 module "intermediate-function" {
-  source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
+  source      = "git::https://github.com/GoogleCloudPlatform/cloud-foundation-fabric.git//modules/cloud-function-v2?depth=1&ref=v36.0.1"
   project_id  = var.project
   region      = var.region
   name        = "orch-framework-intermediate"
@@ -67,7 +67,7 @@ data "google_project" "project" {
 }
 
 module "aef-scheduling-function-sa" {
-  source     = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/iam-service-account"
+  source     = "git::https://github.com/GoogleCloudPlatform/cloud-foundation-fabric.git//modules/iam-service-account?depth=1&ref=v36.0.1"
   project_id = var.project
   name       = "aef-scheduling-function-sa"
 
@@ -85,7 +85,7 @@ module "aef-scheduling-function-sa" {
 }
 
 module "scheduling-function" {
-  source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/cloud-function-v2"
+  source      = "git::https://github.com/GoogleCloudPlatform/cloud-foundation-fabric.git//modules/cloud-function-v2?depth=1&ref=v36.0.1"
   project_id  = var.project
   region      = var.region
   name        = "orch-framework-scheduling"
@@ -122,7 +122,7 @@ module "scheduling-function" {
 
 
 module "bigquery-dataset" {
-  source     = "github.com/GoogleCloudPlatform/cloud-foundation-fabric/modules/bigquery-dataset"
+  source     = "git::https://github.com/GoogleCloudPlatform/cloud-foundation-fabric.git//modules/bigquery-dataset?depth=1&ref=v36.0.1"
   project_id = var.project
   id         = "aef_orch_framework"
   tables = {
