@@ -24,17 +24,17 @@ module "pipeline-executor-function" {
     force_destroy = true
   }
   bundle_config = {
-    path  = "../functions/orchestration-helpers/pipeline-executor"
+    path = "../functions/orchestration-helpers/pipeline-executor"
   }
   function_config = {
-    runtime = "python39",
+    runtime        = "python39",
     instance_count = 200
   }
   environment_variables = {
     WORKFLOW_CONTROL_PROJECT_ID = var.project
     WORKFLOW_CONTROL_DATASET_ID = module.bigquery-dataset.dataset_id
-    WORKFLOW_CONTROL_TABLE_ID = "workflows_control"
-    WORKFLOWS_LOCATION = var.region
+    WORKFLOW_CONTROL_TABLE_ID   = "workflows_control"
+    WORKFLOWS_LOCATION          = var.region
   }
 }
 
@@ -48,16 +48,16 @@ module "intermediate-function" {
     force_destroy = true
   }
   bundle_config = {
-    path  = "../functions/orchestration-helpers/intermediate"
+    path = "../functions/orchestration-helpers/intermediate"
   }
   function_config = {
-    runtime = "python39",
+    runtime        = "python39",
     instance_count = 200
   }
   environment_variables = {
     WORKFLOW_CONTROL_PROJECT_ID = var.project
     WORKFLOW_CONTROL_DATASET_ID = module.bigquery-dataset.dataset_id
-    WORKFLOW_CONTROL_TABLE_ID = "workflows_control"
+    WORKFLOW_CONTROL_TABLE_ID   = "workflows_control"
   }
 }
 
@@ -94,30 +94,30 @@ module "scheduling-function" {
     force_destroy = true
   }
   bundle_config = {
-    path  = "../functions/orchestration-helpers/scheduling"
+    path = "../functions/orchestration-helpers/scheduling"
   }
   function_config = {
-    runtime = "python39",
+    runtime        = "python39",
     instance_count = 200
   }
   environment_variables = {
     WORKFLOW_SCHEDULING_FIRESTORE_COLLECTION = var.workflows_scheduling_table_name
-    WORKFLOW_SCHEDULING_PROJECT_ID = var.project
-    WORKFLOW_SCHEDULING_PROJECT_NUMBER = data.google_project.project.number
-    WORKFLOW_SCHEDULING_PROJECT_REGION = var.region
-    PIPELINE_EXECUTION_FUNCTION_NAME = module.pipeline-executor-function.function_name
+    WORKFLOW_SCHEDULING_PROJECT_ID           = var.project
+    WORKFLOW_SCHEDULING_PROJECT_NUMBER       = data.google_project.project.number
+    WORKFLOW_SCHEDULING_PROJECT_REGION       = var.region
+    PIPELINE_EXECUTION_FUNCTION_NAME         = module.pipeline-executor-function.function_name
   }
   trigger_config = {
     event_type = "google.cloud.firestore.document.v1.written"
     event_filters = [
       {
         attribute = "database"
-        value="(default)"
+        value     = "(default)"
       }
     ]
   }
   service_account = module.aef-scheduling-function-sa.email
-  depends_on = [google_firestore_database.database]
+  depends_on      = [google_firestore_database.database]
 }
 
 

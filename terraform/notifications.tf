@@ -16,8 +16,8 @@
 
 resource "google_monitoring_notification_channel" "email-error-channel" {
   display_name = "Email Error Channel"
-  type = "email"
-  project = var.project
+  type         = "email"
+  project      = var.project
   labels = {
     email_address = var.operator_email
   }
@@ -26,7 +26,7 @@ resource "google_monitoring_notification_channel" "email-error-channel" {
 
 resource "google_monitoring_alert_policy" "alert-intermediate-function" {
   display_name = "cloud functions async alert policy"
-  project = var.project
+  project      = var.project
   combiner     = "OR"
   conditions {
     display_name = "Error condition"
@@ -35,7 +35,7 @@ resource "google_monitoring_alert_policy" "alert-intermediate-function" {
     }
   }
 
-  notification_channels = [ google_monitoring_notification_channel.email-error-channel.name ]
+  notification_channels = [google_monitoring_notification_channel.email-error-channel.name]
   alert_strategy {
     notification_rate_limit {
       period = "300s"

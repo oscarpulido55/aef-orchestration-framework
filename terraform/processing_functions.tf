@@ -38,10 +38,10 @@ module "bq-saved-query-executor" {
     force_destroy = true
   }
   bundle_config = {
-    path  = "../functions/data-processing-engines/bq-saved-query-executor"
+    path = "../functions/data-processing-engines/bq-saved-query-executor"
   }
   function_config = {
-    runtime = "python39",
+    runtime        = "python39",
     instance_count = 200
   }
   service_account = module.aef-processing-function-sa.email
@@ -57,10 +57,10 @@ module "dataform-tag-executor" {
     force_destroy = true
   }
   bundle_config = {
-    path  = "../functions/data-processing-engines/dataform-tag-executor"
+    path = "../functions/data-processing-engines/dataform-tag-executor"
   }
   function_config = {
-    runtime = "python39",
+    runtime        = "python39",
     instance_count = 200
   }
   service_account = module.aef-processing-function-sa.email
@@ -76,10 +76,10 @@ module "dataflow-flextemplate-job-executor" {
     force_destroy = true
   }
   bundle_config = {
-    path  = "../functions/data-processing-engines/dataflow-flextemplate-job-executor"
+    path = "../functions/data-processing-engines/dataflow-flextemplate-job-executor"
   }
   function_config = {
-    runtime = "python39",
+    runtime        = "python39",
     instance_count = 200
   }
   service_account = module.aef-processing-function-sa.email
@@ -95,10 +95,10 @@ module "dataproc-serverless-job-executor" {
     force_destroy = true
   }
   bundle_config = {
-    path  = "../functions/data-processing-engines/dataproc-serverless-job-executor"
+    path = "../functions/data-processing-engines/dataproc-serverless-job-executor"
   }
   function_config = {
-    runtime = "python39",
+    runtime        = "python39",
     instance_count = 200
   }
   service_account = module.aef-processing-function-sa.email
