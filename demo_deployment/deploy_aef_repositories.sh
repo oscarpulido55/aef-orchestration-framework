@@ -22,8 +22,8 @@ terraform_bucket=$6
 escaped_project_id=$(echo "$project_id" | sed 's/-/\\-/g')
 
 # Check if arguments are provided
-if [ -z "$new_repo_name" ] || [ -z "$project_id" ] || [ -z "$working_directory" ] || [ -z "$github_user_name" ] || [ -z "$aef_operator_email" ]; then
-  echo "Usage: $0 <new_repo_name> <project_id> <working_directory> <github_user_name> <aef_operator_email>"
+if [ -z "$new_repo_name" ] || [ -z "$project_id" ] || [ -z "$working_directory" ] || [ -z "$github_user_name" ] || [ -z "$aef_operator_email" ] || [ -z "$aef_terraform_bucket" ]; then
+  echo "Usage: $0 <new_repo_name> <project_id> <working_directory> <github_user_name> <aef_operator_email> <aef_terraform_bucket>"
   exit 1
 fi
 
