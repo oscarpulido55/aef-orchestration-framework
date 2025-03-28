@@ -22,8 +22,8 @@ terraform_bucket=$6
 escaped_project_id=$(echo "$project_id" | sed 's/-/\\-/g')
 
 # Check if arguments are provided
-if [ -z "$new_repo_name" ] || [ -z "$project_id" ] || [ -z "$working_directory" ] || [ -z "$github_user_name" ] || [ -z "$aef_operator_email" ] || [ -z "$aef_terraform_bucket" ]; then
-  echo "Usage: $0 <new_repo_name> <project_id> <working_directory> <github_user_name> <aef_operator_email> <aef_terraform_bucket>"
+if [ -z "$new_repo_name" ] || [ -z "$project_id" ] || [ -z "$working_directory" ] || [ -z "$github_user_name" ] || [ -z "$aef_operator_email" ] || [ -z "$terraform_bucket" ]; then
+  echo "Usage: $0 <new_repo_name> <project_id> <working_directory> <github_user_name> <aef_operator_email> <terraform_bucket>"
   exit 1
 fi
 
@@ -116,7 +116,7 @@ if [ ! -f "aef-data-model/sample-data/terraform/tfplansampledata" ]; then
   echo "Deploying demo data sources aef-data-model/sample-data ... "
   git clone git@github.com:oscarpulido55/aef-data-model.git
   cd aef-data-model/sample-data/terraform/
-  terraform_prefix="sample-data/environments/dev"
+  terraform_prefix=$(echo "sample-data/environments/dev" | sed 's/\//\\\//g')
   sed -i.bak "s/<TERRAFORM_BUCKET>/$terraform_bucket/g" backend.tf
   sed -i.bak "s/<TERRAFORM_ENV>/$terraform_prefix/g" backend.tf
   sed -i.bak "s/<PROJECT_ID>/$escaped_project_id/g" demo.tfvars
@@ -143,7 +143,7 @@ cd $working_directory
 if [ ! -f "aef-data-model/terraform/tfplandatamodel" ]; then
   echo "Deploying aef-data-model repository... "
   cd aef-data-model/terraform/
-  terraform_prefix="aef-data-model/environments/dev"
+  terraform_prefix=$(echo "aef-data-model/environments/dev" | sed 's/\//\\\//g')
   sed -i.bak "s/<TERRAFORM_BUCKET>/$terraform_bucket/g" backend.tf
   sed -i.bak "s/<TERRAFORM_ENV>/$terraform_prefix/g" backend.tf
   sed -i.bak "s/<PROJECT_ID>/$escaped_project_id/g" prod.tfvars
@@ -168,7 +168,7 @@ if [ ! -f "aef-data-orchestration/terraform/tfplandataorch" ]; then
   echo "Deploying aef-data-orchestration repository... "
   git clone git@github.com:oscarpulido55/aef-data-orchestration.git
   cd aef-data-orchestration/terraform
-  terraform_prefix="aef-data-orchestration/environments/dev"
+  terraform_prefix=$(echo "aef-data-orchestration/environments/dev" | sed 's/\//\\\//g')
   sed -i.bak "s/<TERRAFORM_BUCKET>/$terraform_bucket/g" backend.tf
   sed -i.bak "s/<TERRAFORM_ENV>/$terraform_prefix/g" backend.tf
   sed -i.bak "s/<PROJECT_ID>/$escaped_project_id/g" prod.tfvars
@@ -198,7 +198,7 @@ if [ ! -f "aef-data-transformation/terraform/tfplandatatrans" ]; then
   sed -i.bak "s/<PROJECT_ID>/$escaped_project_id/g" aef-data-transformation/jobs/dev/dataproc-serverless-job-executor/cobrix/example_cobrix_job.json
   cd aef-data-transformation/terraform
   terraform init
-  terraform_prefix="aef-data-transformation/environments/dev"
+  terraform_prefix=$(echo "aef-data-transformation/environments/dev" | sed 's/\//\\\//g')
   sed -i.bak "s/<TERRAFORM_BUCKET>/$terraform_bucket/g" backend.tf
   sed -i.bak "s/<TERRAFORM_ENV>/$terraform_prefix/g" backend.tf
   terraform plan -out=tfplandatatrans -var "project=$project_id" -var 'region=us-central1' -var 'domain=example' -var 'environment=dev'
@@ -220,7 +220,7 @@ if [ ! -f "aef-orchestration-framework/terraform/tfplanorchframework" ]; then
   git clone git@github.com:oscarpulido55/aef-orchestration-framework.git
   cd aef-orchestration-framework/terraform
   terraform init
-  terraform_prefix="aef-orchestration-framework/environments/dev"
+  terraform_prefix=$(echo "aef-orchestration-framework/environments/dev" | sed 's/\//\\\//g')
   sed -i.bak "s/<TERRAFORM_BUCKET>/$terraform_bucket/g" backend.tf
   sed -i.bak "s/<TERRAFORM_ENV>/$terraform_prefix/g" backend.tf
   terraform plan -out=tfplanorchframework -var "project=$project_id" -var "region=us-central1" -var "operator_email=$aef_operator_email"
