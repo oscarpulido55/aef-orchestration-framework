@@ -198,10 +198,10 @@ if [ ! -f "aef-data-transformation/terraform/tfplandatatrans" ]; then
   sed -i.bak "s/<PROJECT_ID>/$escaped_project_id/g" aef-data-transformation/jobs/dev/dataproc-serverless-job-executor/sample_serverless_spark_mainframe_ingestion.json
   sed -i.bak "s/<PROJECT_ID>/$escaped_project_id/g" aef-data-transformation/jobs/dev/dataproc-serverless-job-executor/cobrix/example_cobrix_job.json
   cd aef-data-transformation/terraform
+  terraform_prefix=$(echo "aef-data-transformation/environments/dev" | sed 's/\//\\\//g')
   sed -i.bak "s/<TERRAFORM_BUCKET>/$terraform_bucket/g" backend.tf
   sed -i.bak "s/<TERRAFORM_ENV>/$terraform_prefix/g" backend.tf
   terraform init
-  terraform_prefix=$(echo "aef-data-transformation/environments/dev" | sed 's/\//\\\//g')
   terraform plan -out=tfplandatatrans -var "project=$project_id" -var 'region=us-central1' -var 'domain=example' -var 'environment=dev'
   terraform apply -auto-approve tfplandatatrans
 else
