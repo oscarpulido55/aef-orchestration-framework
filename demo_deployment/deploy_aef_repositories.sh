@@ -191,16 +191,17 @@ cd $working_directory
 if [ ! -f "aef-data-transformation/terraform/tfplandatatrans" ]; then
   git clone git@github.com:oscarpulido55/aef-data-transformation.git
   sed -i.bak "s/<PROJECT_ID>/$escaped_project_id/g" aef-data-transformation/jobs/dev/dataflow-flextemplate-job-executor/sample_jdbc_dataflow_ingestion.json
+  gcloud config set project $project_id
   fake_onprem_sql_private_ip=$(gcloud sql instances describe fake-on-prem-instance --format="value(ipAddresses[2].ipAddress)")
   sed -i.bak "s/<DB_PRIVATE_IP>/$fake_onprem_sql_private_ip/g" aef-data-transformation/jobs/dev/dataflow-flextemplate-job-executor/sample_jdbc_dataflow_ingestion.json
   sed -i.bak "s/<PROJECT_ID>/$escaped_project_id/g" aef-data-transformation/jobs/dev/dataform-tag-executor/run_dataform_tag.json
   sed -i.bak "s/<PROJECT_ID>/$escaped_project_id/g" aef-data-transformation/jobs/dev/dataproc-serverless-job-executor/sample_serverless_spark_mainframe_ingestion.json
   sed -i.bak "s/<PROJECT_ID>/$escaped_project_id/g" aef-data-transformation/jobs/dev/dataproc-serverless-job-executor/cobrix/example_cobrix_job.json
   cd aef-data-transformation/terraform
-  terraform init
-  terraform_prefix=$(echo "aef-data-transformation/environments/dev" | sed 's/\//\\\//g')
   sed -i.bak "s/<TERRAFORM_BUCKET>/$terraform_bucket/g" backend.tf
   sed -i.bak "s/<TERRAFORM_ENV>/$terraform_prefix/g" backend.tf
+  terraform init
+  terraform_prefix=$(echo "aef-data-transformation/environments/dev" | sed 's/\//\\\//g')
   terraform plan -out=tfplandatatrans -var "project=$project_id" -var 'region=us-central1' -var 'domain=example' -var 'environment=dev'
   terraform apply -auto-approve tfplandatatrans
 else
