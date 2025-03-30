@@ -220,10 +220,10 @@ cd $working_directory
 if [ ! -f "aef-orchestration-framework/terraform/tfplanorchframework" ]; then
   git clone git@github.com:oscarpulido55/aef-orchestration-framework.git
   cd aef-orchestration-framework/terraform
-  terraform init
   terraform_prefix=$(echo "aef-orchestration-framework/environments/dev" | sed 's/\//\\\//g')
   sed -i.bak "s/<TERRAFORM_BUCKET>/$terraform_bucket/g" backend.tf
   sed -i.bak "s/<TERRAFORM_ENV>/$terraform_prefix/g" backend.tf
+  terraform init
   terraform plan -out=tfplanorchframework -var "project=$project_id" -var "region=us-central1" -var "operator_email=$aef_operator_email"
   terraform apply -auto-approve tfplanorchframework
 else
