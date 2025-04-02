@@ -1,3 +1,5 @@
+### This is repository is DEPRECATED please use: https://github.com/GoogleCloudPlatform/aef-orchestration-framework
+
 # Analytics Engineering Framework - Orchestration Framework
 
 ***Note:*** For a comprehensive installation guide of all the AEF repositories together, please look [here](https://github.com/oscarpulido55/aef-orchestration-framework/blob/main/AEF_DEPLOYMENT.md).
